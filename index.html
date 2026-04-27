@@ -1627,366 +1627,418 @@ window._fitlogRender=function(){buildFitLog();flUpdateStats();setTimeout(functio
 })();
 
 // ════════════════════════════════════════════════════════
-// VANITY PANEL — iOS Calendar style, full rebuild
+// VANITY PANEL — iOS Calendar month-grid style
 // ════════════════════════════════════════════════════════
 (function(){
 
-// ── Inject Vanity-specific styles ──
+/* ─── STYLES ─── */
 var vs = document.createElement('style');
 vs.textContent = `
-/* ── VANITY WRAPPER ── */
-.vn-page { display:flex; flex-direction:column; flex:1; overflow:hidden; background:var(--bg); }
-.vn-topbar { display:flex; align-items:center; gap:10px; padding:10px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap; }
-.vn-topbar h2 { font-size:12px; font-weight:700; color:var(--accent); font-family:'JetBrains Mono',monospace; flex:1; }
-.vn-main { display:flex; flex:1; overflow:hidden; }
+/* Layout */
+#panel-vanity.active { display:flex; flex-direction:column; overflow:hidden; }
+.vn-page  { display:flex; flex-direction:column; flex:1; overflow:hidden; background:#f5f5f7; }
+.vn-topbar{ display:flex; align-items:center; gap:10px; padding:10px 18px;
+            background:#fff; border-bottom:1px solid #d1d1d6; flex-shrink:0; }
+.vn-topbar h2{ font-family:-apple-system,'Syne',sans-serif; font-size:15px; font-weight:700;
+               color:#1c1c1e; flex:1; letter-spacing:-.2px; }
+.vn-body  { display:flex; flex:1; overflow:hidden; }
 
-/* ── WEEK FEED (left scroll area) ── */
-.vn-feed { flex:1; overflow-y:auto; padding:16px 16px 60px; display:flex; flex-direction:column; gap:16px; }
-.vn-feed::-webkit-scrollbar { width:5px; }
-.vn-feed::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+/* Feed */
+.vn-feed  { flex:1; overflow-y:auto; padding:14px 14px 60px;
+            display:flex; flex-direction:column; gap:14px; background:#f5f5f7; }
+.vn-feed::-webkit-scrollbar{ width:6px; }
+.vn-feed::-webkit-scrollbar-thumb{ background:#c7c7cc; border-radius:3px; }
 
-/* ── WEEK STRIP ── */
-.vn-strip { border-radius:16px; overflow:hidden; background:var(--surface); border:1px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,.04); }
-.vn-strip.vn-current { border-color:var(--accent); box-shadow:0 0 0 2px rgba(108,138,255,.18), 0 4px 16px rgba(108,138,255,.08); }
-.vn-strip-hdr { display:flex; align-items:center; justify-content:space-between; padding:9px 14px; background:rgba(108,138,255,.05); border-bottom:1px solid var(--border); }
-.vn-strip-hdr-left { display:flex; flex-direction:column; gap:1px; }
-.vn-strip-title { font-size:12px; font-weight:700; color:var(--accent); font-family:'JetBrains Mono',monospace; }
-.vn-strip-range { font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
-.vn-strip-hdr-right { display:flex; gap:12px; }
-.vn-well-badge { display:flex; flex-direction:column; align-items:center; gap:1px; }
-.vn-well-badge-lbl { font-size:8px; color:var(--muted); font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:.4px; }
-.vn-well-badge-val { font-size:11px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--accent2); }
+/* Week card */
+.vn-card  { background:#fff; border-radius:13px; overflow:hidden;
+            box-shadow:0 1px 3px rgba(0,0,0,.10), 0 0 0 .5px rgba(0,0,0,.06); }
+.vn-card.vn-cur{ box-shadow:0 0 0 2px #007aff, 0 2px 8px rgba(0,122,255,.18); }
+.vn-card-hdr{ display:flex; align-items:center; justify-content:space-between;
+              padding:8px 14px; border-bottom:.5px solid #e5e5ea; background:#fafafa; }
+.vn-card-title{ font-family:-apple-system,'Syne',sans-serif; font-size:12px;
+                font-weight:700; color:#007aff; letter-spacing:-.1px; }
+.vn-card-range{ font-size:11px; color:#8e8e93; font-family:-apple-system,sans-serif; }
 
-/* ── 7-DAY GRID (horizontal, like iOS Calendar week) ── */
-.vn-days-grid { display:grid; grid-template-columns:repeat(7,1fr); border-top:none; }
-.vn-day-cell { display:flex; flex-direction:column; align-items:center; padding:8px 4px 10px; border-right:1px solid var(--border); gap:6px; min-width:0; position:relative; }
-.vn-day-cell:last-child { border-right:none; }
-.vn-day-cell.vn-today { background:rgba(108,138,255,.05); }
+/* 8-col grid: 7 days + 1 summary */
+.vn-grid  { display:grid; grid-template-columns:repeat(8,1fr); }
 
-/* Day header (like iOS: day name + number) */
-.vn-day-header { display:flex; flex-direction:column; align-items:center; gap:2px; }
-.vn-day-name { font-size:9px; font-weight:600; color:var(--muted); font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:.5px; }
-.vn-day-num { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--text); }
-.vn-day-cell.vn-today .vn-day-num { background:var(--accent); color:#fff; }
-.vn-day-cell.vn-today .vn-day-name { color:var(--accent); }
+/* Column headers (day names) — rendered as first row */
+.vn-col-hdr{ padding:5px 2px; text-align:center; font-size:9px; font-weight:600;
+             color:#8e8e93; font-family:-apple-system,sans-serif; letter-spacing:.4px;
+             text-transform:uppercase; border-bottom:.5px solid #e5e5ea;
+             border-right:.5px solid #e5e5ea; background:#fafafa; }
+.vn-col-hdr:last-child{ border-right:none; }
 
-/* Muscle dropdowns */
-.vn-muscle-wrap { display:flex; flex-direction:column; gap:3px; width:100%; }
-.vn-msel { width:100%; font-size:8px; padding:3px 2px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-family:'JetBrains Mono',monospace; cursor:pointer; outline:none; text-align:center; appearance:none; -webkit-appearance:none; }
-.vn-msel:focus { border-color:var(--accent); }
-.vn-msel.has-value { background:rgba(108,138,255,.12); border-color:rgba(108,138,255,.35); color:var(--accent); font-weight:700; }
+/* Day cells */
+.vn-cell  { border-right:.5px solid #e5e5ea; border-top:.5px solid #e5e5ea;
+            padding:6px 4px 7px; display:flex; flex-direction:column;
+            align-items:center; gap:5px; min-height:110px; }
+.vn-cell:last-child{ border-right:none; }
+.vn-cell.vn-today{ background:rgba(0,122,255,.04); }
 
-/* Wellness tick buttons */
-.vn-well-row { display:flex; flex-direction:column; gap:4px; width:100%; margin-top:2px; }
-.vn-well-item { display:flex; align-items:center; justify-content:space-between; gap:2px; }
-.vn-well-lbl { font-size:7px; color:var(--muted); font-family:'JetBrains Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
-.vn-well-btn { width:16px; height:16px; border-radius:4px; border:1.5px solid var(--border); background:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:9px; color:transparent; transition:all .12s; flex-shrink:0; }
-.vn-well-btn:hover { border-color:var(--green); }
-.vn-well-btn.on { background:var(--green); border-color:var(--green); color:#fff; font-weight:700; }
+/* Date number — iOS style */
+.vn-date-num{ width:26px; height:26px; border-radius:50%; display:flex;
+              align-items:center; justify-content:center;
+              font-size:14px; font-weight:600; color:#1c1c1e;
+              font-family:-apple-system,sans-serif; flex-shrink:0; }
+.vn-cell.vn-today .vn-date-num{ background:#ff3b30; color:#fff; font-weight:700; }
 
-/* ── DASHBOARD SIDEBAR ── */
-.vn-dash { width:200px; min-width:200px; border-left:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; overflow:hidden; }
-.vn-dash-inner { flex:1; overflow-y:auto; padding:14px 12px 24px; display:flex; flex-direction:column; gap:14px; }
-.vn-dash-inner::-webkit-scrollbar { width:4px; }
-.vn-dash-inner::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
-.vn-dash-section { display:flex; flex-direction:column; gap:6px; }
-.vn-dash-title { font-size:9px; font-weight:700; color:var(--muted); font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:1px; padding-bottom:4px; border-bottom:1px solid var(--border); margin-bottom:2px; }
-.vn-dash-row { display:flex; align-items:center; justify-content:space-between; }
-.vn-dash-lbl { font-size:10px; color:var(--text2); }
-.vn-dash-val { font-size:11px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--accent); }
-.vn-dash-bar-wrap { margin-top:1px; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
-.vn-dash-bar-fill { height:100%; border-radius:2px; background:var(--accent); transition:width .4s; }
+/* Muscle selects */
+.vn-sel   { width:100%; font-size:8px; padding:3px 2px; border-radius:6px;
+            border:.5px solid #c7c7cc; background:#f2f2f7; color:#1c1c1e;
+            font-family:-apple-system,sans-serif; cursor:pointer; outline:none;
+            appearance:none; -webkit-appearance:none; text-align:center;
+            transition:border-color .12s, background .12s; }
+.vn-sel.picked{ background:rgba(0,122,255,.1); border-color:#007aff;
+                color:#007aff; font-weight:600; }
+
+/* Wellness ticks */
+.vn-well-row { display:flex; flex-direction:column; gap:3px; width:100%; margin-top:2px; }
+.vn-well-item{ display:flex; align-items:center; justify-content:space-between; gap:2px; }
+.vn-well-lbl { font-size:7px; color:#8e8e93; font-family:-apple-system,sans-serif;
+               flex:1; white-space:nowrap; }
+.vn-tick     { width:15px; height:15px; border-radius:4px; border:1.5px solid #c7c7cc;
+               background:none; cursor:pointer; display:flex; align-items:center;
+               justify-content:center; font-size:9px; color:transparent;
+               transition:all .12s; flex-shrink:0; padding:0; }
+.vn-tick:hover{ border-color:#34c759; }
+.vn-tick.on  { background:#34c759; border-color:#34c759; color:#fff; font-weight:700; }
+
+/* Summary (8th) cell */
+.vn-sum-cell { border-top:.5px solid #e5e5ea; padding:6px 6px 7px;
+               display:flex; flex-direction:column; gap:4px;
+               min-height:110px; background:#f9f9fb; }
+.vn-sum-title{ font-size:8px; font-weight:700; color:#8e8e93;
+               font-family:-apple-system,sans-serif; text-transform:uppercase;
+               letter-spacing:.4px; text-align:center; margin-bottom:1px; }
+.vn-sum-muscles{ display:flex; flex-direction:column; gap:2px; }
+.vn-sum-m    { display:flex; align-items:center; justify-content:space-between; }
+.vn-sum-mlbl { font-size:7.5px; color:#3a3a3c; font-family:-apple-system,sans-serif; }
+.vn-sum-mval { font-size:8px; font-weight:700; font-family:-apple-system,sans-serif; }
+.vn-sum-mval.hit { color:#007aff; }
+.vn-sum-mval.miss{ color:#c7c7cc; }
+.vn-sum-divider{ border:none; border-top:.5px solid #e5e5ea; margin:2px 0; }
+.vn-sum-wrow { display:flex; align-items:center; justify-content:space-between; }
+.vn-sum-wlbl { font-size:7.5px; color:#3a3a3c; font-family:-apple-system,sans-serif; }
+.vn-sum-wval { font-size:8px; font-weight:700; color:#34c759;
+               font-family:-apple-system,sans-serif; }
+
+/* Dashboard sidebar */
+.vn-dash     { width:190px; min-width:190px; border-left:.5px solid #d1d1d6;
+               background:#fff; display:flex; flex-direction:column; overflow:hidden; }
+.vn-dash-scroll{ flex:1; overflow-y:auto; padding:14px 12px 30px; display:flex;
+                  flex-direction:column; gap:14px; }
+.vn-dash-scroll::-webkit-scrollbar{ width:4px; }
+.vn-dash-scroll::-webkit-scrollbar-thumb{ background:#c7c7cc; border-radius:3px; }
+.vn-dash-sec { display:flex; flex-direction:column; gap:5px; }
+.vn-dash-hd  { font-size:9px; font-weight:700; color:#8e8e93;
+               font-family:-apple-system,sans-serif; text-transform:uppercase;
+               letter-spacing:.7px; padding-bottom:5px;
+               border-bottom:.5px solid #e5e5ea; }
+.vn-dash-row { display:flex; align-items:center; justify-content:space-between; margin-top:1px; }
+.vn-dash-lbl { font-size:10px; color:#3a3a3c; font-family:-apple-system,sans-serif; }
+.vn-dash-val { font-size:10px; font-weight:700; font-family:-apple-system,sans-serif; color:#007aff; }
+.vn-dash-bar { height:3px; background:#e5e5ea; border-radius:2px; margin-top:2px; overflow:hidden; }
+.vn-dash-fill{ height:100%; border-radius:2px; transition:width .4s; }
+.vn-dash-wval{ font-size:10px; font-weight:700; color:#34c759;
+               font-family:-apple-system,sans-serif; }
+
+/* Button */
+.vn-btn      { padding:5px 13px; border-radius:8px; border:.5px solid #007aff;
+               background:#fff; color:#007aff; font-size:11px; font-weight:600;
+               cursor:pointer; font-family:-apple-system,sans-serif; transition:all .12s; }
+.vn-btn:hover{ background:#007aff; color:#fff; }
 `;
 document.head.appendChild(vs);
 
-var VN_LS = 'ad_vanity';
-var VD = {};
-try { VD = JSON.parse(localStorage.getItem(VN_LS) || '{}'); } catch(e) {}
-function vnSave() { try { localStorage.setItem(VN_LS, JSON.stringify(VD)); } catch(e) {} }
+/* ─── DATA ─── */
+var VN_LS='ad_vanity', VD={};
+try{ VD=JSON.parse(localStorage.getItem(VN_LS)||'{}'); }catch(e){}
+function vnSave(){ try{ localStorage.setItem(VN_LS,JSON.stringify(VD)); }catch(e){} }
 
-var MUSCLES = ['Back','Biceps','Triceps','Chest','Legs','Shoulders','Forearms'];
-var WELLNESS = ['Stretches','Core','Meditation'];
-var MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-var DN = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+var MUSCLES=['Back','Biceps','Triceps','Chest','Legs','Shoulders','Forearms'];
+var WELLNESS=['Stretches','Core','Meditation'];
+var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var DN_HDRS=['MON','TUE','WED','THU','FRI','SAT','SUN','WEEK'];
 
-// ISO week key
-function getWK(dt) {
-  var d = new Date(dt); d.setHours(0,0,0,0);
-  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-  var y = d.getFullYear();
-  var w = Math.ceil(((d - new Date(y,0,1)) / 86400000 + 1) / 7);
-  return y + '-W' + String(w).padStart(2,'0');
+/* ─── DATE HELPERS ─── */
+function isoWK(dt){
+  var d=new Date(dt); d.setHours(0,0,0,0);
+  d.setDate(d.getDate()+4-(d.getDay()||7));
+  var y=d.getFullYear();
+  var w=Math.ceil(((d-new Date(y,0,1))/86400000+1)/7);
+  return y+'-W'+String(w).padStart(2,'0');
 }
-// Monday of ISO week
-function getWKStart(wk) {
-  var p = wk.split('-W'); var y = parseInt(p[0]), w = parseInt(p[1]);
-  var jan4 = new Date(y,0,4); var dow = jan4.getDay() || 7;
-  var mon = new Date(jan4); mon.setDate(jan4.getDate() - dow + 1 + (w-1)*7);
+function wkMonday(wk){
+  var p=wk.split('-W'), y=parseInt(p[0]), w=parseInt(p[1]);
+  var jan4=new Date(y,0,4), dow=jan4.getDay()||7;
+  var mon=new Date(jan4); mon.setDate(jan4.getDate()-dow+1+(w-1)*7);
   return mon;
 }
-function fmtShort(d) { return d.getDate() + ' ' + MN[d.getMonth()]; }
-function getWeeksIn2026() {
-  var weeks = []; var d = new Date(2026,0,1);
-  while (d.getFullYear() <= 2026) {
-    var wk = getWK(d);
-    if (wk.startsWith('2026') && !weeks.includes(wk)) weeks.push(wk);
-    d.setDate(d.getDate() + 7);
+function fmtShort(d){ return d.getDate()+' '+MN[d.getMonth()]; }
+function dkey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function weeksIn2026(){
+  var out=[], d=new Date(2026,0,1);
+  while(d.getFullYear()<=2026){
+    var wk=isoWK(d);
+    if(wk.startsWith('2026')&&!out.includes(wk)) out.push(wk);
+    d.setDate(d.getDate()+7);
   }
-  return weeks;
+  return out;
 }
-function vnEnsure(wk) { if (!VD[wk]) VD[wk] = { days:{}, wellness:{} }; }
+function vnEnsure(wk){ if(!VD[wk]) VD[wk]={days:{},well:{}}; }
 
-// Build the panel shell once
-function vnBuildPanel() {
-  var panel = document.getElementById('panel-vanity');
-  panel.innerHTML =
-    '<div class="vn-page">' +
-      '<div class="vn-topbar">' +
-        '<h2>💪 Vanity — Fitness Tracker 2026</h2>' +
-        '<button class="tbtn" onclick="vnGoCurrentWeek()">📍 Current Week</button>' +
-      '</div>' +
-      '<div class="vn-main">' +
-        '<div class="vn-feed" id="vn-feed"></div>' +
-        '<div class="vn-dash"><div class="vn-dash-inner" id="vn-dash-inner"></div></div>' +
-      '</div>' +
+/* ─── BUILD PANEL SHELL ─── */
+function vnBuildPanel(){
+  var panel=document.getElementById('panel-vanity');
+  panel.innerHTML=
+    '<div class="vn-page">'+
+      '<div class="vn-topbar">'+
+        '<h2>&#128170; Vanity &mdash; Fitness Tracker 2026</h2>'+
+        '<button class="vn-btn" onclick="vnGoNow()">&#128205; Current Week</button>'+
+      '</div>'+
+      '<div class="vn-body">'+
+        '<div class="vn-feed" id="vn-feed"></div>'+
+        '<div class="vn-dash"><div class="vn-dash-scroll" id="vn-dash"></div></div>'+
+      '</div>'+
     '</div>';
 }
 
-function vnRenderWeeks() {
-  var feed = document.getElementById('vn-feed');
-  if (!feed) return;
-  feed.innerHTML = '';
-  var allWeeks = getWeeksIn2026();
-  var currentWk = getWK(new Date());
-  var totalWeeks = allWeeks.length;
-  var todayKey = dk(new Date());
+/* ─── RENDER ALL WEEKS ─── */
+function vnRenderWeeks(){
+  var feed=document.getElementById('vn-feed');
+  if(!feed) return;
+  feed.innerHTML='';
 
-  allWeeks.forEach(function(wk) {
+  var allWks=weeksIn2026();
+  var curWk=isoWK(new Date());
+  var total=allWks.length;
+  var todayKey=dkey(new Date());
+
+  allWks.forEach(function(wk){
     vnEnsure(wk);
-    var wkN = parseInt(wk.split('-W')[1]);
-    var isCur = (wk === currentWk);
-    var wStart = getWKStart(wk);
-    var wEnd = new Date(wStart); wEnd.setDate(wStart.getDate() + 6);
+    var wkN=parseInt(wk.split('-W')[1]);
+    var isCur=(wk===curWk);
+    var mon=wkMonday(wk);
+    var sun=new Date(mon); sun.setDate(mon.getDate()+6);
 
-    // ── Strip shell ──
-    var strip = document.createElement('div');
-    strip.className = 'vn-strip' + (isCur ? ' vn-current' : '');
-    strip.id = 'vn-week-' + wk;
+    /* Card */
+    var card=document.createElement('div');
+    card.className='vn-card'+(isCur?' vn-cur':'');
+    card.id='vn-wk-'+wk;
 
-    // ── Strip header ──
-    var hdr = document.createElement('div');
-    hdr.className = 'vn-strip-hdr';
+    /* Card header */
+    var hdr=document.createElement('div');
+    hdr.className='vn-card-hdr';
+    hdr.innerHTML=
+      '<span class="vn-card-title">'+(isCur?'&#9733; ':'')+'Week '+wkN+' of '+total+' &mdash; 2026</span>'+
+      '<span class="vn-card-range">'+fmtShort(mon)+' &rarr; '+fmtShort(sun)+'</span>';
+    card.appendChild(hdr);
 
-    var hdrL = document.createElement('div');
-    hdrL.className = 'vn-strip-hdr-left';
-    hdrL.innerHTML =
-      '<div class="vn-strip-title">' + (isCur ? '★ ' : '') + 'Week ' + wkN + ' of ' + totalWeeks + '</div>' +
-      '<div class="vn-strip-range">' + fmtShort(wStart) + ' → ' + fmtShort(wEnd) + '</div>';
-    hdr.appendChild(hdrL);
+    /* Grid */
+    var grid=document.createElement('div');
+    grid.className='vn-grid';
 
-    // Wellness mini-badges in header (will be updated by vnUpdateWell)
-    var hdrR = document.createElement('div');
-    hdrR.className = 'vn-strip-hdr-right';
-    hdrR.id = 'vn-hdr-well-' + wk;
-    hdr.appendChild(hdrR);
-    strip.appendChild(hdr);
+    /* Column headers row */
+    DN_HDRS.forEach(function(h){
+      var ch=document.createElement('div');
+      ch.className='vn-col-hdr';
+      ch.textContent=h;
+      grid.appendChild(ch);
+    });
 
-    // ── 7-day grid ──
-    var grid = document.createElement('div');
-    grid.className = 'vn-days-grid';
+    /* 7 day cells */
+    for(var di=0;di<7;di++){
+      var dayDate=new Date(mon); dayDate.setDate(mon.getDate()+di);
+      var dk2=dkey(dayDate);
+      var isToday=(dk2===todayKey);
+      var dayData=VD[wk].days[dk2]||{m1:'',m2:''};
 
-    for (var di = 0; di < 7; di++) {
-      var dayDate = new Date(wStart);
-      dayDate.setDate(wStart.getDate() + di);
-      var dayKey = dk(dayDate);
-      var isToday = (dayKey === todayKey);
-      var dayData = VD[wk].days[dayKey] || { m1:'', m2:'' };
+      var cell=document.createElement('div');
+      cell.className='vn-cell'+(isToday?' vn-today':'');
 
-      var cell = document.createElement('div');
-      cell.className = 'vn-day-cell' + (isToday ? ' vn-today' : '');
+      /* Date number */
+      var dateEl=document.createElement('div');
+      dateEl.className='vn-date-num';
+      dateEl.textContent=dayDate.getDate();
+      cell.appendChild(dateEl);
 
-      // Day header
-      var dHdr = document.createElement('div');
-      dHdr.className = 'vn-day-header';
-      dHdr.innerHTML =
-        '<div class="vn-day-name">' + DN[di] + '</div>' +
-        '<div class="vn-day-num">' + dayDate.getDate() + '</div>';
-      cell.appendChild(dHdr);
-
-      // Muscle dropdowns
-      var mWrap = document.createElement('div');
-      mWrap.className = 'vn-muscle-wrap';
-
-      [1,2].forEach(function(slot) {
-        var sel = document.createElement('select');
-        sel.className = 'vn-msel' + ((slot===1?dayData.m1:dayData.m2) ? ' has-value' : '');
-        sel.title = 'Muscle group ' + slot;
-        var curVal = slot===1 ? dayData.m1 : dayData.m2;
-        var opts = [['','—']].concat(MUSCLES.map(function(m){return [m,m];}));
-        opts.forEach(function(opt) {
-          var o = document.createElement('option');
-          o.value = opt[0]; o.textContent = opt[1];
-          if (curVal === opt[0]) o.selected = true;
+      /* Two muscle dropdowns */
+      var mwrap=document.createElement('div');
+      mwrap.style.cssText='display:flex;flex-direction:column;gap:3px;width:100%;';
+      [1,2].forEach(function(slot){
+        var sel=document.createElement('select');
+        var cur=(slot===1)?dayData.m1:dayData.m2;
+        sel.className='vn-sel'+(cur?' picked':'');
+        [['','—']].concat(MUSCLES.map(function(m){return [m,m.slice(0,3)];})).forEach(function(opt){
+          var o=document.createElement('option');
+          o.value=opt[0]; o.textContent=opt[1];
+          if(cur===opt[0]) o.selected=true;
           sel.appendChild(o);
         });
-        (function(w2, dk2, s2, el) {
-          el.onchange = function() {
+        (function(w2,dk3,s,el){
+          el.onchange=function(){
             vnEnsure(w2);
-            if (!VD[w2].days[dk2]) VD[w2].days[dk2] = {m1:'',m2:''};
-            VD[w2].days[dk2]['m'+s2] = this.value;
-            this.className = 'vn-msel' + (this.value ? ' has-value' : '');
-            vnSave();
-            vnUpdateSB(w2);
-            vnUpdateDash();
+            if(!VD[w2].days[dk3]) VD[w2].days[dk3]={m1:'',m2:''};
+            VD[w2].days[dk3]['m'+s]=this.value;
+            el.className='vn-sel'+(this.value?' picked':'');
+            vnSave(); vnRefreshSummary(w2); vnUpdateDash();
           };
-        })(wk, dayKey, slot, sel);
-        mWrap.appendChild(sel);
+        })(wk,dk2,slot,sel);
+        mwrap.appendChild(sel);
       });
-      cell.appendChild(mWrap);
+      cell.appendChild(mwrap);
 
-      // Wellness tick items
-      var wellRow = document.createElement('div');
-      wellRow.className = 'vn-well-row';
-      WELLNESS.forEach(function(well) {
-        var wellKey = well.toLowerCase();
-        var storKey = dayKey + ':' + wellKey;
-        var checked = VD[wk].wellness[storKey] || false;
-
-        var item = document.createElement('div');
-        item.className = 'vn-well-item';
-
-        var lbl = document.createElement('span');
-        lbl.className = 'vn-well-lbl';
-        lbl.textContent = well.slice(0,3);
-
-        var btn = document.createElement('button');
-        btn.className = 'vn-well-btn' + (checked ? ' on' : '');
-        btn.textContent = checked ? '✓' : '';
-        btn.title = well;
-
-        (function(w2, sk, b) {
-          b.onclick = function() {
+      /* Wellness ticks */
+      var wellWrap=document.createElement('div');
+      wellWrap.className='vn-well-row';
+      WELLNESS.forEach(function(well){
+        var wKey=dk2+':'+well.toLowerCase();
+        var on=VD[wk].well[wKey]||false;
+        var item=document.createElement('div');
+        item.className='vn-well-item';
+        var lbl=document.createElement('span');
+        lbl.className='vn-well-lbl';
+        lbl.textContent=well.slice(0,3);
+        var btn=document.createElement('button');
+        btn.className='vn-tick'+(on?' on':'');
+        btn.textContent=on?'\u2713':'';
+        (function(w2,wk2,b){
+          b.onclick=function(){
             vnEnsure(w2);
-            VD[w2].wellness[sk] = !VD[w2].wellness[sk];
-            b.className = 'vn-well-btn' + (VD[w2].wellness[sk] ? ' on' : '');
-            b.textContent = VD[w2].wellness[sk] ? '✓' : '';
-            vnSave();
-            vnUpdateWellBadges(w2);
-            vnUpdateDash();
+            VD[w2].well[wk2]=!VD[w2].well[wk2];
+            b.className='vn-tick'+(VD[w2].well[wk2]?' on':'');
+            b.textContent=VD[w2].well[wk2]?'\u2713':'';
+            vnSave(); vnRefreshSummary(w2); vnUpdateDash();
           };
-        })(wk, storKey, btn);
-
-        item.appendChild(lbl);
-        item.appendChild(btn);
-        wellRow.appendChild(item);
+        })(wk,wKey,btn);
+        item.appendChild(lbl); item.appendChild(btn);
+        wellWrap.appendChild(item);
       });
-      cell.appendChild(wellRow);
+      cell.appendChild(wellWrap);
       grid.appendChild(cell);
     }
 
-    strip.appendChild(grid);
-    feed.appendChild(strip);
+    /* 8th cell — Summary */
+    var sumCell=document.createElement('div');
+    sumCell.className='vn-sum-cell';
+    sumCell.id='vn-sum-'+wk;
+    grid.appendChild(sumCell);
 
-    // update scoreboard badges in header
-    vnUpdateWellBadges(wk);
-    vnUpdateSB(wk);
+    card.appendChild(grid);
+    feed.appendChild(card);
+    vnRefreshSummary(wk);
   });
 
-  setTimeout(function() {
-    var el = document.getElementById('vn-week-' + currentWk);
-    if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
-  }, 120);
+  /* Scroll to current week */
+  setTimeout(function(){
+    var el=document.getElementById('vn-wk-'+curWk);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  },120);
 }
 
-// Update wellness x/7 badges in the strip header
-function vnUpdateWellBadges(wk) {
-  var hdrR = document.getElementById('vn-hdr-well-' + wk);
-  if (!hdrR) return;
+/* ─── REFRESH 8TH SUMMARY CELL ─── */
+function vnRefreshSummary(wk){
+  var cell=document.getElementById('vn-sum-'+wk);
+  if(!cell) return;
   vnEnsure(wk);
-  var wStart = getWKStart(wk);
-  var wC = {}; WELLNESS.forEach(function(w){wC[w]=0;});
-  for (var di=0; di<7; di++) {
-    var dd = new Date(wStart); dd.setDate(wStart.getDate()+di);
-    var dKey = dk(dd);
-    WELLNESS.forEach(function(w2){ if(VD[wk].wellness[dKey+':'+w2.toLowerCase()]) wC[w2]++; });
+  var mon=wkMonday(wk);
+  var mC={}, wC={};
+  MUSCLES.forEach(function(m){mC[m]=0;});
+  WELLNESS.forEach(function(w){wC[w]=0;});
+
+  for(var di=0;di<7;di++){
+    var d=new Date(mon); d.setDate(mon.getDate()+di);
+    var dk2=dkey(d);
+    var dd=VD[wk].days[dk2]||{};
+    if(dd.m1&&mC[dd.m1]!==undefined) mC[dd.m1]++;
+    if(dd.m2&&mC[dd.m2]!==undefined) mC[dd.m2]++;
+    WELLNESS.forEach(function(w2){
+      if(VD[wk].well[dk2+':'+w2.toLowerCase()]) wC[w2]++;
+    });
   }
-  hdrR.innerHTML = WELLNESS.map(function(w2){
-    var c = wC[w2];
-    return '<div class="vn-well-badge"><div class="vn-well-badge-lbl">'+w2.slice(0,3)+'</div><div class="vn-well-badge-val" style="color:'+(c>0?'var(--green)':'var(--muted)')+'">'+c+'/7</div></div>';
-  }).join('');
+
+  var html='<div class="vn-sum-title">Week</div><div class="vn-sum-muscles">';
+  MUSCLES.forEach(function(m){
+    var c=mC[m];
+    html+='<div class="vn-sum-m"><span class="vn-sum-mlbl">'+m.slice(0,3)+'</span>'+
+          '<span class="vn-sum-mval '+(c>0?'hit':'miss')+'">'+c+'×</span></div>';
+  });
+  html+='</div><hr class="vn-sum-divider"/>';
+  WELLNESS.forEach(function(w2){
+    var c=wC[w2];
+    html+='<div class="vn-sum-wrow"><span class="vn-sum-wlbl">'+w2.slice(0,3)+'</span>'+
+          '<span class="vn-sum-wval">'+c+'/7</span></div>';
+  });
+  cell.innerHTML=html;
 }
 
-// Scoreboard update (kept for dash triggering)
-function vnUpdateSB(wk) {
-  vnUpdateWellBadges(wk);
-  vnUpdateDash();
-}
+/* ─── DASHBOARD ─── */
+function vnUpdateDash(){
+  var dash=document.getElementById('vn-dash');
+  if(!dash) return;
+  var today=new Date();
+  var mM={},mY={};MUSCLES.forEach(function(m){mM[m]=0;mY[m]=0;});
+  var wM={},wY={};WELLNESS.forEach(function(w){wM[w]=0;wY[w]=0;});
 
-function vnUpdateDash() {
-  var dash = document.getElementById('vn-dash-inner');
-  if (!dash) return;
-  var today = new Date();
-  var mM={}, mY={};  MUSCLES.forEach(function(m){mM[m]=0;mY[m]=0;});
-  var wM={}, wY={};  WELLNESS.forEach(function(w){wM[w]=0;wY[w]=0;});
-
-  Object.keys(VD).forEach(function(wk) {
-    if (!wk.startsWith('2026')) return;
-    var wStart = getWKStart(wk);
-    for (var di=0; di<7; di++) {
-      var dd = new Date(wStart); dd.setDate(wStart.getDate()+di);
-      if (dd.getFullYear() !== 2026) continue;
-      var dKey = dk(dd);
-      var isMonth = (dd.getMonth()===today.getMonth() && dd.getFullYear()===today.getFullYear());
-      var dD = VD[wk].days[dKey] || {};
-      [dD.m1, dD.m2].forEach(function(m) {
-        if (m && mY[m] !== undefined) { mY[m]++; if(isMonth) mM[m]++; }
+  Object.keys(VD).forEach(function(wk){
+    if(!wk.startsWith('2026')) return;
+    var mon=wkMonday(wk);
+    for(var di=0;di<7;di++){
+      var d=new Date(mon); d.setDate(mon.getDate()+di);
+      if(d.getFullYear()!==2026) continue;
+      var dk2=dkey(d);
+      var isM=(d.getMonth()===today.getMonth()&&d.getFullYear()===today.getFullYear());
+      var dd=VD[wk].days[dk2]||{};
+      [dd.m1,dd.m2].forEach(function(m){
+        if(m&&mY[m]!==undefined){mY[m]++;if(isM)mM[m]++;}
       });
-      WELLNESS.forEach(function(w2) {
-        if (VD[wk].wellness[dKey+':'+w2.toLowerCase()]) { wY[w2]++; if(isMonth) wM[w2]++; }
+      WELLNESS.forEach(function(w2){
+        if(VD[wk].well[dk2+':'+w2.toLowerCase()]){wY[w2]++;if(isM)wM[w2]++;}
       });
     }
   });
 
-  var maxM = Math.max(1, Math.max.apply(null, MUSCLES.map(function(m){return mY[m];})));
-  var maxMm = Math.max(1, Math.max.apply(null, MUSCLES.map(function(m){return mM[m];})));
+  var maxM=Math.max(1,Math.max.apply(null,MUSCLES.map(function(m){return mY[m];})));
+  var maxMm=Math.max(1,Math.max.apply(null,MUSCLES.map(function(m){return mM[m];})));
 
-  dash.innerHTML =
-    // Month muscles
-    '<div class="vn-dash-section">' +
-    '<div class="vn-dash-title" style="color:var(--accent)">📅 This Month</div>' +
-    MUSCLES.map(function(m) {
-      var c = mM[m];
-      return '<div><div class="vn-dash-row"><span class="vn-dash-lbl">'+m+'</span><span class="vn-dash-val">'+c+'</span></div>' +
-        '<div class="vn-dash-bar-wrap"><div class="vn-dash-bar-fill" style="width:'+Math.round(c/maxMm*100)+'%"></div></div></div>';
-    }).join('') +
-    '</div>' +
-    // Year muscles
-    '<div class="vn-dash-section">' +
-    '<div class="vn-dash-title" style="color:var(--accent2)">🗓 All Year</div>' +
-    MUSCLES.map(function(m) {
-      var c = mY[m];
-      return '<div><div class="vn-dash-row"><span class="vn-dash-lbl">'+m+'</span><span class="vn-dash-val" style="color:var(--accent2)">'+c+'</span></div>' +
-        '<div class="vn-dash-bar-wrap"><div class="vn-dash-bar-fill" style="width:'+Math.round(c/maxM*100)+'%;background:var(--accent2)"></div></div></div>';
-    }).join('') +
-    '</div>' +
-    // Wellness
-    '<div class="vn-dash-section">' +
-    '<div class="vn-dash-title" style="color:var(--green)">🟢 Wellness</div>' +
-    '<div style="font-size:8px;color:var(--muted);font-family:\'JetBrains Mono\',monospace;margin-bottom:4px">month / year</div>' +
-    WELLNESS.map(function(w2) {
-      return '<div class="vn-dash-row"><span class="vn-dash-lbl">'+w2+'</span><span class="vn-dash-val" style="color:var(--green)">'+wM[w2]+' / '+wY[w2]+'</span></div>';
-    }).join('') +
+  dash.innerHTML=
+    '<div class="vn-dash-sec">'+
+    '<div class="vn-dash-hd" style="color:#007aff">&#128197; This Month</div>'+
+    MUSCLES.map(function(m){
+      var c=mM[m], pct=Math.round(c/maxMm*100);
+      return '<div><div class="vn-dash-row"><span class="vn-dash-lbl">'+m+'</span>'+
+             '<span class="vn-dash-val">'+c+'</span></div>'+
+             '<div class="vn-dash-bar"><div class="vn-dash-fill" style="width:'+pct+'%;background:#007aff"></div></div></div>';
+    }).join('')+
+    '</div>'+
+    '<div class="vn-dash-sec">'+
+    '<div class="vn-dash-hd" style="color:#5856d6">&#128197; All Year</div>'+
+    MUSCLES.map(function(m){
+      var c=mY[m], pct=Math.round(c/maxM*100);
+      return '<div><div class="vn-dash-row"><span class="vn-dash-lbl">'+m+'</span>'+
+             '<span class="vn-dash-val" style="color:#5856d6">'+c+'</span></div>'+
+             '<div class="vn-dash-bar"><div class="vn-dash-fill" style="width:'+pct+'%;background:#5856d6"></div></div></div>';
+    }).join('')+
+    '</div>'+
+    '<div class="vn-dash-sec">'+
+    '<div class="vn-dash-hd" style="color:#34c759">&#129001; Wellness</div>'+
+    '<div style="font-size:8px;color:#8e8e93;font-family:-apple-system,sans-serif;margin-bottom:3px">month / year</div>'+
+    WELLNESS.map(function(w2){
+      return '<div class="vn-dash-row"><span class="vn-dash-lbl">'+w2+'</span>'+
+             '<span class="vn-dash-wval">'+wM[w2]+' / '+wY[w2]+'</span></div>';
+    }).join('')+
     '</div>';
 }
 
-window.vnGoCurrentWeek = function() {
-  var el = document.getElementById('vn-week-' + getWK(new Date()));
-  if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+window.vnGoNow=function(){
+  var el=document.getElementById('vn-wk-'+isoWK(new Date()));
+  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
 };
 
-window._vanityRender = function() {
-  var panel = document.getElementById('panel-vanity');
-  if (!panel.querySelector('.vn-page')) vnBuildPanel();
+window._vanityRender=function(){
+  var panel=document.getElementById('panel-vanity');
+  if(!panel.querySelector('.vn-page')) vnBuildPanel();
   vnRenderWeeks();
   vnUpdateDash();
 };
