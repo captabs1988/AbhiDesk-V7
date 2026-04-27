@@ -1,451 +1,367 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Vanity — Fitness Tracker 2026</title>
 <style>
-/* ── RESET & BASE ── */
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
-     background:#f2f2f7;color:#1c1c1e;height:100vh;overflow:hidden;
-     display:flex;flex-direction:column;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;min-height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:#f2f2f7;color:#1c1c1e;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .topbar{
+    height:52px;min-height:52px;display:flex;align-items:center;gap:10px;
+    padding:10px 16px;background:#fff;border-bottom:1px solid #d1d1d6;
+    box-shadow:0 1px 0 rgba(0,0,0,.05);z-index:5;
+  }
+  .topbar h1{font-size:17px;font-weight:750;letter-spacing:-.3px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .topbar-btn{
+    border:1.5px solid #007aff;background:#fff;color:#007aff;border-radius:10px;
+    font-size:12px;font-weight:700;padding:7px 12px;cursor:pointer;font-family:inherit;
+  }
+  .topbar-btn:hover{background:#007aff;color:#fff;}
 
-/* ── TOP BAR ── */
-.topbar{display:flex;align-items:center;gap:10px;padding:10px 18px;
-        background:#fff;border-bottom:1px solid #d1d1d6;flex-shrink:0;
-        box-shadow:0 1px 0 rgba(0,0,0,.06);}
-.topbar h1{font-size:17px;font-weight:700;color:#1c1c1e;flex:1;letter-spacing:-.3px;}
-.topbar-btn{padding:6px 14px;border-radius:10px;border:1.5px solid #007aff;
-            background:#fff;color:#007aff;font-size:12px;font-weight:600;
-            cursor:pointer;transition:all .15s;font-family:inherit;}
-.topbar-btn:hover{background:#007aff;color:#fff;}
+  .main-body{flex:1 1 auto;min-height:0;display:flex;overflow:hidden;background:#f2f2f7;}
+  .feed{
+    flex:1 1 auto;min-width:0;min-height:0;overflow:auto;padding:14px;
+    display:flex;flex-direction:column;gap:14px;background:#f2f2f7;
+  }
+  .feed::-webkit-scrollbar{width:8px;height:8px}.feed::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:10px}
 
-/* ── BODY LAYOUT ── */
-.body{display:flex;flex:1;overflow:hidden;}
+  .wk-card{
+    flex:0 0 auto;background:#fff;border-radius:16px;overflow:hidden;
+    border:1px solid rgba(0,0,0,.08);box-shadow:0 2px 10px rgba(0,0,0,.06);
+  }
+  .wk-card.is-current{border-color:#007aff;box-shadow:0 0 0 2px #007aff,0 8px 24px rgba(0,122,255,.16);}
+  .wk-hdr{
+    min-height:42px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:9px 14px;background:#fbfbfd;border-bottom:1px solid #e5e5ea;
+  }
+  .wk-title{font-size:14px;font-weight:800;color:#007aff;letter-spacing:-.1px;}
+  .wk-range{font-size:12px;color:#8e8e93;white-space:nowrap;}
 
-/* ── WEEK FEED ── */
-.feed{flex:1;overflow-y:auto;padding:14px 14px 60px;
-      display:flex;flex-direction:column;gap:14px;background:#f2f2f7;}
-.feed::-webkit-scrollbar{width:6px;}
-.feed::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:3px;}
+  /* 8 cells: Mon-Sun + Week summary. Min widths stop Chrome from crushing the content into faint lines. */
+  .wk-grid{
+    display:grid;width:100%;min-width:840px;
+    grid-template-columns:repeat(7,minmax(96px,1fr)) minmax(122px,132px);
+    grid-auto-rows:auto;background:#e5e5ea;gap:1px;
+  }
+  .col-hdr{
+    height:28px;display:flex;align-items:center;justify-content:center;background:#fafafa;
+    font-size:9.5px;font-weight:750;letter-spacing:.55px;color:#8e8e93;text-transform:uppercase;
+  }
+  .col-hdr.sum-hdr{color:#3a3a3c;}
 
-/* ── WEEK CARD ── */
-.wk-card{background:#fff;border-radius:14px;overflow:hidden;
-         box-shadow:0 1px 4px rgba(0,0,0,.10),0 0 0 .5px rgba(0,0,0,.06);}
-.wk-card.is-current{box-shadow:0 0 0 2.5px #007aff,0 2px 12px rgba(0,122,255,.2);}
+  .day-cell,.sum-cell{background:#fff;min-height:136px;}
+  .day-cell{
+    display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 7px 9px;
+  }
+  .day-cell.is-today{background:#f3f8ff;}
+  .date-num{
+    width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:650;color:#1c1c1e;line-height:1;flex:0 0 auto;
+  }
+  .day-cell.is-today .date-num{background:#ff3b30;color:#fff;font-weight:800;}
 
-/* Card header */
-.wk-hdr{display:flex;align-items:center;justify-content:space-between;
-        padding:8px 14px;border-bottom:.5px solid #e5e5ea;background:#fafafa;}
-.wk-title{font-size:13px;font-weight:700;color:#007aff;letter-spacing:-.1px;}
-.wk-range{font-size:11px;color:#8e8e93;}
+  .muscle-wrap{width:100%;display:flex;flex-direction:column;gap:4px;}
+  .m-sel{
+    width:100%;min-height:24px;border:1px solid #c7c7cc;border-radius:8px;background:#f7f7f9;
+    color:#1c1c1e;font-size:10px;font-weight:650;padding:3px 4px;font-family:inherit;outline:none;
+  }
+  .m-sel.picked{background:#e7f1ff;border-color:#007aff;color:#007aff;}
+  .m-sel:focus{border-color:#007aff;box-shadow:0 0 0 2px rgba(0,122,255,.16);}
 
-/* ── 8-COLUMN GRID ── */
-/* columns: 7 days + 1 summary */
-.wk-grid{display:grid;grid-template-columns:repeat(7,1fr) 110px;width:100%;}
+  .well-wrap{width:100%;display:grid;grid-template-columns:1fr;gap:3px;margin-top:2px;}
+  .well-item{display:flex;align-items:center;justify-content:space-between;gap:5px;min-height:18px;}
+  .well-lbl{font-size:8.5px;font-weight:650;color:#6e6e73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tick{
+    width:18px;height:18px;border-radius:6px;border:1.5px solid #c7c7cc;background:#fff;
+    color:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;
+    font-size:12px;font-weight:900;font-family:inherit;line-height:1;
+  }
+  .tick:hover{border-color:#34c759}.tick.on{background:#34c759;border-color:#34c759;color:#fff;}
 
-/* Column header row */
-.col-hdr{padding:5px 4px;text-align:center;font-size:9px;font-weight:600;
-         color:#8e8e93;letter-spacing:.5px;text-transform:uppercase;
-         border-bottom:.5px solid #e5e5ea;border-right:.5px solid #e5e5ea;
-         background:#fafafa;}
-.col-hdr:last-child{border-right:none;}
-.col-hdr.sum-hdr{color:#3a3a3c;}
+  .sum-cell{display:flex;flex-direction:column;gap:3px;padding:8px;background:#f9f9fb;}
+  .sum-ttl{font-size:9px;font-weight:850;color:#8e8e93;text-align:center;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px;}
+  .sum-m,.sum-w{display:flex;align-items:center;justify-content:space-between;gap:4px;line-height:1.15;}
+  .sum-mlbl,.sum-wlbl{font-size:9px;font-weight:650;color:#3a3a3c;}
+  .sum-mval,.sum-wval{font-size:10px;font-weight:850;}
+  .sum-mval.hit{color:#007aff}.sum-mval.miss{color:#c7c7cc}.sum-wval{color:#34c759;}
+  .sum-div{border:0;border-top:1px solid #d1d1d6;margin:4px 0;}
 
-/* Day cells */
-.day-cell{border-right:.5px solid #e5e5ea;border-top:.5px solid #e5e5ea;
-          padding:8px 5px 10px;display:flex;flex-direction:column;
-          align-items:center;gap:5px;min-height:130px;min-width:0;}
-.day-cell:last-child{border-right:none;}
-.day-cell.is-today{background:rgba(0,122,255,.04);}
+  .dash{width:230px;min-width:230px;background:#fff;border-left:1px solid #d1d1d6;display:flex;flex-direction:column;overflow:hidden;}
+  .dash-scroll{flex:1 1 auto;min-height:0;overflow:auto;padding:14px 12px 30px;display:flex;flex-direction:column;gap:16px;}
+  .dash-scroll::-webkit-scrollbar{width:6px}.dash-scroll::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:10px}
+  .dash-sec{display:flex;flex-direction:column;gap:5px;}
+  .dash-hd{font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.7px;padding-bottom:6px;border-bottom:1px solid #e5e5ea;margin-bottom:2px;}
+  .dash-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px;}
+  .dash-lbl{font-size:11px;color:#3a3a3c;}.dash-val{font-size:11px;font-weight:850;color:#007aff;}.dash-wval{font-size:11px;font-weight:850;color:#34c759;}
+  .dash-bar{height:4px;background:#e5e5ea;border-radius:999px;overflow:hidden;margin-top:3px;}.dash-fill{height:100%;border-radius:999px;}
+  .dash-note{font-size:9px;color:#8e8e93;}
+  .error-box{margin:20px;padding:14px;border-radius:12px;background:#fff0f0;color:#b00020;border:1px solid #ffb3b3;font-size:13px;line-height:1.45;}
 
-/* Date number — iOS red circle for today */
-.date-num{width:28px;height:28px;border-radius:50%;display:flex;
-          align-items:center;justify-content:center;
-          font-size:15px;font-weight:500;color:#1c1c1e;flex-shrink:0;
-          transition:background .12s;}
-.day-cell.is-today .date-num{background:#ff3b30;color:#fff;font-weight:700;}
-
-/* Muscle dropdowns */
-.muscle-wrap{display:flex;flex-direction:column;gap:3px;width:100%;}
-.m-sel{width:100%;font-size:8.5px;padding:3px 2px;border-radius:7px;
-       border:.5px solid #c7c7cc;background:#f2f2f7;color:#1c1c1e;
-       font-family:inherit;cursor:pointer;outline:none;
-       appearance:none;-webkit-appearance:none;
-       text-align:center;transition:all .12s;}
-.m-sel.picked{background:rgba(0,122,255,.12);border-color:#007aff;
-              color:#007aff;font-weight:600;}
-.m-sel:focus{border-color:#007aff;}
-
-/* Wellness row */
-.well-wrap{display:flex;flex-direction:column;gap:3px;width:100%;margin-top:1px;}
-.well-item{display:flex;align-items:center;justify-content:space-between;gap:2px;}
-.well-lbl{font-size:7.5px;color:#8e8e93;flex:1;}
-.tick{width:16px;height:16px;border-radius:5px;border:1.5px solid #c7c7cc;
-      background:none;cursor:pointer;display:flex;align-items:center;
-      justify-content:center;font-size:10px;color:transparent;
-      transition:all .12s;flex-shrink:0;padding:0;font-family:inherit;}
-.tick:hover{border-color:#34c759;}
-.tick.on{background:#34c759;border-color:#34c759;color:#fff;font-weight:700;}
-
-/* ── SUMMARY CELL (8th column) ── */
-.sum-cell{border-top:.5px solid #e5e5ea;padding:8px 7px 10px;
-          display:flex;flex-direction:column;gap:3px;
-          min-height:130px;background:#f9f9fb;min-width:0;}
-.sum-ttl{font-size:8px;font-weight:700;color:#8e8e93;
-         text-transform:uppercase;letter-spacing:.5px;
-         text-align:center;margin-bottom:2px;}
-.sum-m{display:flex;align-items:center;justify-content:space-between;}
-.sum-mlbl{font-size:7.5px;color:#3a3a3c;}
-.sum-mval{font-size:8px;font-weight:700;}
-.sum-mval.hit{color:#007aff;}
-.sum-mval.miss{color:#c7c7cc;}
-.sum-div{border:none;border-top:.5px solid #d1d1d6;margin:3px 0;}
-.sum-w{display:flex;align-items:center;justify-content:space-between;}
-.sum-wlbl{font-size:7.5px;color:#3a3a3c;}
-.sum-wval{font-size:8px;font-weight:700;color:#34c759;}
-
-/* ── DASHBOARD SIDEBAR ── */
-.dash{width:200px;min-width:200px;border-left:.5px solid #d1d1d6;
-      background:#fff;display:flex;flex-direction:column;overflow:hidden;}
-.dash-scroll{flex:1;overflow-y:auto;padding:14px 12px 30px;
-             display:flex;flex-direction:column;gap:14px;}
-.dash-scroll::-webkit-scrollbar{width:4px;}
-.dash-scroll::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:3px;}
-.dash-sec{display:flex;flex-direction:column;gap:4px;}
-.dash-hd{font-size:9px;font-weight:700;color:#8e8e93;text-transform:uppercase;
-         letter-spacing:.7px;padding-bottom:5px;border-bottom:.5px solid #e5e5ea;
-         margin-bottom:2px;}
-.dash-row{display:flex;align-items:center;justify-content:space-between;margin-top:2px;}
-.dash-lbl{font-size:10px;color:#3a3a3c;}
-.dash-val{font-size:10px;font-weight:700;color:#007aff;}
-.dash-bar{height:3px;background:#e5e5ea;border-radius:2px;margin-top:2px;overflow:hidden;}
-.dash-fill{height:100%;border-radius:2px;transition:width .4s;}
-.dash-wval{font-size:10px;font-weight:700;color:#34c759;}
-.dash-note{font-size:8px;color:#8e8e93;margin-bottom:2px;}
+  @media(max-width:900px){
+    .dash{width:190px;min-width:190px}.wk-grid{min-width:780px;grid-template-columns:repeat(7,minmax(90px,1fr)) minmax(118px,126px)}
+  }
 </style>
 </head>
 <body>
-
-<div class="topbar">
-  <h1>💪 Vanity — Fitness Tracker 2026</h1>
-  <button class="topbar-btn" onclick="goNow()">📍 Current Week</button>
-</div>
-
-<div class="body">
-  <div class="feed" id="feed"></div>
-  <div class="dash">
-    <div class="dash-scroll" id="dash"></div>
+  <div class="topbar">
+    <h1>💪 Vanity — Fitness Tracker 2026</h1>
+    <button class="topbar-btn" type="button" onclick="goNow()">📍 Current Week</button>
   </div>
-</div>
+
+  <div class="main-body">
+    <main class="feed" id="feed" aria-label="Weekly fitness calendar"></main>
+    <aside class="dash" aria-label="Vanity dashboard"><div class="dash-scroll" id="dash"></div></aside>
+  </div>
 
 <script>
-// ── DATA ──
-var VN_LS = 'ad_vanity';
-var VD = {};
-try { VD = JSON.parse(localStorage.getItem(VN_LS) || '{}'); } catch(e) {}
-function save() { try { localStorage.setItem(VN_LS, JSON.stringify(VD)); } catch(e) {} }
+(function(){
+  'use strict';
 
-var MUSCLES  = ['Back','Biceps','Triceps','Chest','Legs','Shoulders','Forearms'];
-var WELLNESS = ['Stretches','Core','Meditation'];
-var MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-var DAY_HDRS = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  var VN_LS = 'ad_vanity';
+  var VD = readData();
+  var MUSCLES  = ['Back','Biceps','Triceps','Chest','Legs','Shoulders','Forearms'];
+  var WELLNESS = ['Stretches','Core','Meditation'];
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var DAY_HDRS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  var activeDashDate = new Date();
 
-// ── DATE HELPERS ──
-function isoWK(dt) {
-  var d = new Date(dt); d.setHours(0,0,0,0);
-  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-  var y = d.getFullYear();
-  var w = Math.ceil(((d - new Date(y,0,1)) / 86400000 + 1) / 7);
-  return y + '-W' + String(w).padStart(2,'0');
-}
-function wkMon(wk) {
-  var p = wk.split('-W'), y = parseInt(p[0]), w = parseInt(p[1]);
-  var jan4 = new Date(y,0,4), dow = jan4.getDay() || 7;
-  var mon = new Date(jan4); mon.setDate(jan4.getDate() - dow + 1 + (w-1)*7);
-  return mon;
-}
-function dkey(d) {
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-function fmtShort(d) { return d.getDate() + ' ' + MN[d.getMonth()]; }
-function weeksIn2026() {
-  var out = [], d = new Date(2026,0,1);
-  while (d.getFullYear() <= 2026) {
-    var wk = isoWK(d);
-    if (wk.startsWith('2026') && !out.includes(wk)) out.push(wk);
-    d.setDate(d.getDate() + 7);
+  function readData(){
+    try{
+      var raw = localStorage.getItem(VN_LS);
+      var parsed = raw ? JSON.parse(raw) : {};
+      return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+    }catch(e){ return {}; }
   }
-  return out;
-}
-function ensure(wk) { if (!VD[wk]) VD[wk] = { days:{}, well:{} }; }
+  function save(){ try{ localStorage.setItem(VN_LS, JSON.stringify(VD)); }catch(e){} }
 
-// ── BUILD ALL WEEKS ──
-function render() {
-  var feed = document.getElementById('feed');
-  if (!feed) { console.error('Vanity: #feed not found'); return; }
+  // Important: repairs old/broken ad_vanity shapes instead of assuming the object is valid.
+  function ensure(wk){
+    if (!VD || typeof VD !== 'object' || Array.isArray(VD)) VD = {};
+    if (!VD[wk] || typeof VD[wk] !== 'object' || Array.isArray(VD[wk])) VD[wk] = {};
+    if (!VD[wk].days || typeof VD[wk].days !== 'object' || Array.isArray(VD[wk].days)) VD[wk].days = {};
+    if (!VD[wk].well || typeof VD[wk].well !== 'object' || Array.isArray(VD[wk].well)) VD[wk].well = {};
+    return VD[wk];
+  }
 
-  var allWks = weeksIn2026();
-  if (!allWks.length) { feed.innerHTML = '<p style="padding:20px;color:red">Error: no weeks generated</p>'; return; }
+  function isoWeek(dt){
+    var d = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+    var yearStart = new Date(d.getFullYear(),0,1);
+    var week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return d.getFullYear() + '-W' + String(week).padStart(2,'0');
+  }
+  function weekMonday(wk){
+    var p = wk.split('-W'), y = parseInt(p[0],10), w = parseInt(p[1],10);
+    var jan4 = new Date(y,0,4);
+    var day = jan4.getDay() || 7;
+    var mon = new Date(jan4);
+    mon.setDate(jan4.getDate() - day + 1 + (w - 1) * 7);
+    mon.setHours(0,0,0,0);
+    return mon;
+  }
+  function dateKey(d){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function parseDateKey(k){
+    var parts = String(k).split('-');
+    return new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+  }
+  function shortDate(d){ return d.getDate() + ' ' + MONTHS[d.getMonth()]; }
+  function weeksIn2026(){
+    var found = {}, out = [];
+    for (var t = new Date(2026,0,1); t.getFullYear() === 2026; t.setDate(t.getDate()+1)){
+      var wk = isoWeek(t);
+      if (wk.indexOf('2026-W') === 0 && !found[wk]){ found[wk] = true; out.push(wk); }
+    }
+    return out.sort(function(a,b){ return parseInt(a.slice(6),10) - parseInt(b.slice(6),10); });
+  }
 
-  var curWk  = isoWK(new Date());
-  var total  = allWks.length;
-  var todayK = dkey(new Date());
+  function makeOption(value, text, current){
+    var o = document.createElement('option');
+    o.value = value; o.textContent = text;
+    if (value === current) o.selected = true;
+    return o;
+  }
 
-  feed.innerHTML = '';
+  function render(){
+    var feed = document.getElementById('feed');
+    if (!feed) return;
+    try{
+      var weeks = weeksIn2026();
+      var currentWeek = isoWeek(new Date());
+      var today = dateKey(new Date());
+      var total = weeks.length;
+      feed.innerHTML = '';
 
-  allWks.forEach(function(wk) {
-    ensure(wk);
-    var wkN   = parseInt(wk.split('-W')[1]);
-    var isCur = (wk === curWk);
-    var mon   = wkMon(wk);
-    var sun   = new Date(mon); sun.setDate(mon.getDate() + 6);
+      weeks.forEach(function(wk){
+        ensure(wk);
+        var wkNum = parseInt(wk.slice(6),10);
+        var mon = weekMonday(wk);
+        var sun = new Date(mon); sun.setDate(mon.getDate()+6);
 
-    // ── Card ──
-    var card = document.createElement('div');
-    card.className = 'wk-card' + (isCur ? ' is-current' : '');
-    card.id = 'wk-' + wk;
+        var card = document.createElement('section');
+        card.className = 'wk-card' + (wk === currentWeek ? ' is-current' : '');
+        card.id = 'wk-' + wk;
 
-    // ── Card header ──
-    var hdr = document.createElement('div');
-    hdr.className = 'wk-hdr';
-    hdr.innerHTML =
-      '<span class="wk-title">' + (isCur ? '★ ' : '') +
-      'Week ' + wkN + ' of ' + total + ' — 2026</span>' +
-      '<span class="wk-range">' + fmtShort(mon) + ' → ' + fmtShort(sun) + '</span>';
-    card.appendChild(hdr);
+        var hdr = document.createElement('div');
+        hdr.className = 'wk-hdr';
+        hdr.innerHTML = '<span class="wk-title">' + (wk === currentWeek ? '★ ' : '') + 'Week ' + wkNum + ' of ' + total + ' — 2026</span>' +
+                        '<span class="wk-range">' + shortDate(mon) + ' → ' + shortDate(sun) + '</span>';
+        card.appendChild(hdr);
 
-    // ── Grid ──
-    var grid = document.createElement('div');
-    grid.className = 'wk-grid';
-
-    // Column header row (8 cells)
-    DAY_HDRS.forEach(function(h) {
-      var ch = document.createElement('div');
-      ch.className = 'col-hdr';
-      ch.textContent = h;
-      grid.appendChild(ch);
-    });
-    // Summary column header
-    var sumHdr = document.createElement('div');
-    sumHdr.className = 'col-hdr sum-hdr';
-    sumHdr.textContent = 'WEEK ✦';
-    grid.appendChild(sumHdr);
-
-    // ── 7 day cells ──
-    for (var di = 0; di < 7; di++) {
-      var dayDate = new Date(mon);
-      dayDate.setDate(mon.getDate() + di);
-      var dk2     = dkey(dayDate);
-      var isToday = (dk2 === todayK);
-      var dayData = VD[wk].days[dk2] || { m1:'', m2:'' };
-
-      var cell = document.createElement('div');
-      cell.className = 'day-cell' + (isToday ? ' is-today' : '');
-
-      // Date circle
-      var dn = document.createElement('div');
-      dn.className = 'date-num';
-      dn.textContent = dayDate.getDate();
-      cell.appendChild(dn);
-
-      // 2 muscle dropdowns
-      var mwrap = document.createElement('div');
-      mwrap.className = 'muscle-wrap';
-      [1,2].forEach(function(slot) {
-        var sel = document.createElement('select');
-        var cur = (slot === 1) ? dayData.m1 : dayData.m2;
-        sel.className = 'm-sel' + (cur ? ' picked' : '');
-        // Options: blank + muscles (abbreviated 3 chars)
-        var opts = [['', '—']].concat(MUSCLES.map(function(m){ return [m, m.slice(0,4)]; }));
-        opts.forEach(function(opt) {
-          var o = document.createElement('option');
-          o.value = opt[0]; o.textContent = opt[1];
-          if (cur === opt[0]) o.selected = true;
-          sel.appendChild(o);
+        var grid = document.createElement('div');
+        grid.className = 'wk-grid';
+        DAY_HDRS.forEach(function(day){
+          var h = document.createElement('div'); h.className = 'col-hdr'; h.textContent = day; grid.appendChild(h);
         });
-        (function(w2, dk3, s, el) {
-          el.onchange = function() {
-            ensure(w2);
-            if (!VD[w2].days[dk3]) VD[w2].days[dk3] = { m1:'', m2:'' };
-            VD[w2].days[dk3]['m' + s] = this.value;
-            el.className = 'm-sel' + (this.value ? ' picked' : '');
-            save(); refreshSum(w2); updateDash();
-          };
-        })(wk, dk2, slot, sel);
-        mwrap.appendChild(sel);
+        var sh = document.createElement('div'); sh.className = 'col-hdr sum-hdr'; sh.textContent = 'WEEK'; grid.appendChild(sh);
+
+        for (var i=0;i<7;i++){
+          var d = new Date(mon); d.setDate(mon.getDate()+i);
+          var dk = dateKey(d);
+          var dayData = ensure(wk).days[dk] || {m1:'',m2:''};
+
+          var cell = document.createElement('div');
+          cell.className = 'day-cell' + (dk === today ? ' is-today' : '');
+
+          var num = document.createElement('div');
+          num.className = 'date-num';
+          num.textContent = d.getDate();
+          cell.appendChild(num);
+
+          var mw = document.createElement('div'); mw.className = 'muscle-wrap';
+          [1,2].forEach(function(slot){
+            var key = 'm' + slot;
+            var cur = dayData[key] || '';
+            var sel = document.createElement('select');
+            sel.className = 'm-sel' + (cur ? ' picked' : '');
+            sel.appendChild(makeOption('', '—', cur));
+            MUSCLES.forEach(function(m){ sel.appendChild(makeOption(m, m, cur)); });
+            sel.addEventListener('change', function(){
+              ensure(wk);
+              if (!VD[wk].days[dk] || typeof VD[wk].days[dk] !== 'object') VD[wk].days[dk] = {m1:'',m2:''};
+              VD[wk].days[dk][key] = sel.value;
+              sel.className = 'm-sel' + (sel.value ? ' picked' : '');
+              activeDashDate = parseDateKey(dk);
+              save(); refreshSummary(wk); updateDash();
+            });
+            mw.appendChild(sel);
+          });
+          cell.appendChild(mw);
+
+          var ww = document.createElement('div'); ww.className = 'well-wrap';
+          WELLNESS.forEach(function(well){
+            var wKey = dk + ':' + well.toLowerCase();
+            var row = document.createElement('div'); row.className = 'well-item';
+            var label = document.createElement('span'); label.className = 'well-lbl'; label.textContent = well;
+            var btn = document.createElement('button'); btn.type = 'button';
+            var on = !!ensure(wk).well[wKey];
+            btn.className = 'tick' + (on ? ' on' : ''); btn.textContent = on ? '✓' : '';
+            btn.addEventListener('click', function(){
+              ensure(wk); VD[wk].well[wKey] = !VD[wk].well[wKey];
+              btn.className = 'tick' + (VD[wk].well[wKey] ? ' on' : '');
+              btn.textContent = VD[wk].well[wKey] ? '✓' : '';
+              activeDashDate = parseDateKey(dk);
+              save(); refreshSummary(wk); updateDash();
+            });
+            row.appendChild(label); row.appendChild(btn); ww.appendChild(row);
+          });
+          cell.appendChild(ww);
+          grid.appendChild(cell);
+        }
+
+        var sum = document.createElement('div'); sum.className = 'sum-cell'; sum.id = 'sum-' + wk; grid.appendChild(sum);
+        card.appendChild(grid);
+        feed.appendChild(card);
+        refreshSummary(wk);
       });
-      cell.appendChild(mwrap);
 
-      // Wellness ticks
-      var wellWrap = document.createElement('div');
-      wellWrap.className = 'well-wrap';
-      WELLNESS.forEach(function(well) {
-        var wKey = dk2 + ':' + well.toLowerCase();
-        var on   = VD[wk].well[wKey] || false;
-
-        var item = document.createElement('div');
-        item.className = 'well-item';
-
-        var lbl = document.createElement('span');
-        lbl.className = 'well-lbl';
-        lbl.textContent = well.slice(0,3);
-
-        var btn = document.createElement('button');
-        btn.className = 'tick' + (on ? ' on' : '');
-        btn.textContent = on ? '✓' : '';
-
-        (function(w2, wk2, b) {
-          b.onclick = function() {
-            ensure(w2);
-            VD[w2].well[wk2] = !VD[w2].well[wk2];
-            b.className = 'tick' + (VD[w2].well[wk2] ? ' on' : '');
-            b.textContent = VD[w2].well[wk2] ? '✓' : '';
-            save(); refreshSum(w2); updateDash();
-          };
-        })(wk, wKey, btn);
-
-        item.appendChild(lbl);
-        item.appendChild(btn);
-        wellWrap.appendChild(item);
-      });
-      cell.appendChild(wellWrap);
-      grid.appendChild(cell);
+      updateDash();
+      setTimeout(goNow, 100);
+      save();
+    }catch(err){
+      console.error('Vanity render failed:', err);
+      feed.innerHTML = '<div class="error-box"><b>Vanity render failed.</b><br>' + String(err && err.message ? err.message : err) + '</div>';
     }
-
-    // ── 8th cell: Summary ──
-    var sumCell = document.createElement('div');
-    sumCell.className = 'sum-cell';
-    sumCell.id = 'sum-' + wk;
-    grid.appendChild(sumCell);
-
-    card.appendChild(grid);
-    feed.appendChild(card);
-    refreshSum(wk);
-  });
-
-  updateDash();
-
-  // Scroll to current week
-  setTimeout(function() {
-    var el = document.getElementById('wk-' + curWk);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 150);
-}
-
-// ── REFRESH SUMMARY CELL ──
-function refreshSum(wk) {
-  var cell = document.getElementById('sum-' + wk);
-  if (!cell) return;
-  ensure(wk);
-  var mon = wkMon(wk);
-  var mC = {}, wC = {};
-  MUSCLES.forEach(function(m)  { mC[m] = 0; });
-  WELLNESS.forEach(function(w) { wC[w] = 0; });
-
-  for (var di = 0; di < 7; di++) {
-    var d   = new Date(mon); d.setDate(mon.getDate() + di);
-    var dk2 = dkey(d);
-    var dd  = VD[wk].days[dk2] || {};
-    if (dd.m1 && mC[dd.m1] !== undefined) mC[dd.m1]++;
-    if (dd.m2 && mC[dd.m2] !== undefined) mC[dd.m2]++;
-    WELLNESS.forEach(function(w2) {
-      if (VD[wk].well[dk2 + ':' + w2.toLowerCase()]) wC[w2]++;
-    });
   }
 
-  var html = '<div class="sum-ttl">Week Summary</div>';
-  MUSCLES.forEach(function(m) {
-    var c = mC[m];
-    html += '<div class="sum-m">' +
-            '<span class="sum-mlbl">' + m.slice(0,4) + '</span>' +
-            '<span class="sum-mval ' + (c > 0 ? 'hit' : 'miss') + '">' + c + '×</span>' +
-            '</div>';
-  });
-  html += '<hr class="sum-div"/>';
-  WELLNESS.forEach(function(w2) {
-    var c = wC[w2];
-    html += '<div class="sum-w">' +
-            '<span class="sum-wlbl">' + w2.slice(0,3) + '</span>' +
-            '<span class="sum-wval">' + c + '/7</span>' +
-            '</div>';
-  });
-  cell.innerHTML = html;
-}
-
-// ── DASHBOARD ──
-function updateDash() {
-  var dash = document.getElementById('dash');
-  if (!dash) return;
-  var today = new Date();
-  var mM = {}, mY = {};
-  MUSCLES.forEach(function(m)  { mM[m] = 0; mY[m] = 0; });
-  var wM = {}, wY = {};
-  WELLNESS.forEach(function(w) { wM[w] = 0; wY[w] = 0; });
-
-  Object.keys(VD).forEach(function(wk) {
-    if (!wk.startsWith('2026')) return;
-    var mon = wkMon(wk);
-    for (var di = 0; di < 7; di++) {
-      var d   = new Date(mon); d.setDate(mon.getDate() + di);
-      if (d.getFullYear() !== 2026) continue;
-      var dk2   = dkey(d);
-      var isM   = (d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear());
-      var dd    = VD[wk].days[dk2] || {};
-      [dd.m1, dd.m2].forEach(function(m) {
-        if (m && mY[m] !== undefined) { mY[m]++; if (isM) mM[m]++; }
-      });
-      WELLNESS.forEach(function(w2) {
-        if (VD[wk].well[dk2 + ':' + w2.toLowerCase()]) { wY[w2]++; if (isM) wM[w2]++; }
-      });
+  function refreshSummary(wk){
+    var cell = document.getElementById('sum-' + wk);
+    if (!cell) return;
+    ensure(wk);
+    var mon = weekMonday(wk), muscleCount = {}, wellCount = {};
+    MUSCLES.forEach(function(m){ muscleCount[m]=0; });
+    WELLNESS.forEach(function(w){ wellCount[w]=0; });
+    for (var i=0;i<7;i++){
+      var d = new Date(mon); d.setDate(mon.getDate()+i);
+      var dk = dateKey(d);
+      var dd = VD[wk].days[dk] || {};
+      if (dd.m1 && muscleCount.hasOwnProperty(dd.m1)) muscleCount[dd.m1]++;
+      if (dd.m2 && muscleCount.hasOwnProperty(dd.m2)) muscleCount[dd.m2]++;
+      WELLNESS.forEach(function(well){ if (VD[wk].well[dk + ':' + well.toLowerCase()]) wellCount[well]++; });
     }
-  });
+    var html = '<div class="sum-ttl">Week Summary</div>';
+    MUSCLES.forEach(function(m){
+      var c = muscleCount[m];
+      html += '<div class="sum-m"><span class="sum-mlbl">' + m.slice(0,4) + '</span><span class="sum-mval ' + (c ? 'hit' : 'miss') + '">' + c + '×</span></div>';
+    });
+    html += '<hr class="sum-div">';
+    WELLNESS.forEach(function(well){
+      html += '<div class="sum-w"><span class="sum-wlbl">' + well.slice(0,3) + '</span><span class="sum-wval">' + wellCount[well] + '/7</span></div>';
+    });
+    cell.innerHTML = html;
+  }
 
-  var maxMm = Math.max(1, Math.max.apply(null, MUSCLES.map(function(m){ return mM[m]; })));
-  var maxMy = Math.max(1, Math.max.apply(null, MUSCLES.map(function(m){ return mY[m]; })));
+  function updateDash(){
+    var dash = document.getElementById('dash'); if (!dash) return;
+    var dashMonth = activeDashDate || new Date(), mM = {}, mY = {}, wM = {}, wY = {};
+    MUSCLES.forEach(function(m){ mM[m]=0; mY[m]=0; });
+    WELLNESS.forEach(function(w){ wM[w]=0; wY[w]=0; });
 
-  dash.innerHTML =
-    '<div class="dash-sec">' +
-    '<div class="dash-hd" style="color:#007aff">📅 This Month</div>' +
-    MUSCLES.map(function(m) {
-      var c = mM[m], pct = Math.round(c / maxMm * 100);
-      return '<div><div class="dash-row">' +
-             '<span class="dash-lbl">' + m + '</span>' +
-             '<span class="dash-val">' + c + '</span></div>' +
-             '<div class="dash-bar"><div class="dash-fill" style="width:' + pct + '%;background:#007aff"></div></div></div>';
-    }).join('') +
-    '</div>' +
-    '<div class="dash-sec">' +
-    '<div class="dash-hd" style="color:#5856d6">🗓 All Year</div>' +
-    MUSCLES.map(function(m) {
-      var c = mY[m], pct = Math.round(c / maxMy * 100);
-      return '<div><div class="dash-row">' +
-             '<span class="dash-lbl">' + m + '</span>' +
-             '<span class="dash-val" style="color:#5856d6">' + c + '</span></div>' +
-             '<div class="dash-bar"><div class="dash-fill" style="width:' + pct + '%;background:#5856d6"></div></div></div>';
-    }).join('') +
-    '</div>' +
-    '<div class="dash-sec">' +
-    '<div class="dash-hd" style="color:#34c759">🟢 Wellness</div>' +
-    '<div class="dash-note">month / year</div>' +
-    WELLNESS.map(function(w2) {
-      return '<div class="dash-row">' +
-             '<span class="dash-lbl">' + w2 + '</span>' +
-             '<span class="dash-wval">' + wM[w2] + ' / ' + wY[w2] + '</span></div>';
-    }).join('') +
-    '</div>';
-}
+    weeksIn2026().forEach(function(wk){
+      ensure(wk);
+      var mon = weekMonday(wk);
+      for (var i=0;i<7;i++){
+        var d = new Date(mon); d.setDate(mon.getDate()+i);
+        if (d.getFullYear() !== 2026) continue;
+        var dk = dateKey(d);
+        var inMonth = (d.getFullYear() === dashMonth.getFullYear() && d.getMonth() === dashMonth.getMonth());
+        var dd = VD[wk].days[dk] || {};
+        [dd.m1, dd.m2].forEach(function(m){ if (m && mY.hasOwnProperty(m)){ mY[m]++; if (inMonth) mM[m]++; }});
+        WELLNESS.forEach(function(well){ if (VD[wk].well[dk + ':' + well.toLowerCase()]){ wY[well]++; if (inMonth) wM[well]++; }});
+      }
+    });
 
-function goNow() {
-  var el = document.getElementById('wk-' + isoWK(new Date()));
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+    var maxM = Math.max(1, Math.max.apply(null, MUSCLES.map(function(m){ return mM[m]; })));
+    var maxY = Math.max(1, Math.max.apply(null, MUSCLES.map(function(m){ return mY[m]; })));
+    dash.innerHTML = dashSection('📅 ' + MONTHS[dashMonth.getMonth()] + ' ' + dashMonth.getFullYear(), '#007aff', MUSCLES, mM, maxM) +
+                     dashSection('🗓 All Year', '#5856d6', MUSCLES, mY, maxY) +
+                     '<div class="dash-sec"><div class="dash-hd" style="color:#34c759">🟢 Wellness</div><div class="dash-note">month / year</div>' +
+                     WELLNESS.map(function(w){ return '<div class="dash-row"><span class="dash-lbl">' + w + '</span><span class="dash-wval">' + wM[w] + ' / ' + wY[w] + '</span></div>'; }).join('') +
+                     '</div>';
+  }
+  function dashSection(title, color, items, data, max){
+    return '<div class="dash-sec"><div class="dash-hd" style="color:' + color + '">' + title + '</div>' +
+      items.map(function(m){
+        var c = data[m], pct = Math.round(c / max * 100);
+        return '<div><div class="dash-row"><span class="dash-lbl">' + m + '</span><span class="dash-val" style="color:' + color + '">' + c + '</span></div><div class="dash-bar"><div class="dash-fill" style="width:' + pct + '%;background:' + color + '"></div></div></div>';
+      }).join('') + '</div>';
+  }
 
-// ── INIT ──
-document.addEventListener('DOMContentLoaded', function() {
-  render();
-});
+  window.goNow = function(){
+    var el = document.getElementById('wk-' + isoWeek(new Date()));
+    if (el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
+  else render();
+})();
 </script>
 </body>
 </html>
