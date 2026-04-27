@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vanity — Fitness Tracker 2026</title>
+<style>
+/* ── RESET & BASE ── */
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
+     background:#f2f2f7;color:#1c1c1e;height:100vh;overflow:hidden;
+     display:flex;flex-direction:column;}
+
+/* ── TOP BAR ── */
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 18px;
+        background:#fff;border-bottom:1px solid #d1d1d6;flex-shrink:0;
+        box-shadow:0 1px 0 rgba(0,0,0,.06);}
+.topbar h1{font-size:17px;font-weight:700;color:#1c1c1e;flex:1;letter-spacing:-.3px;}
+.topbar-btn{padding:6px 14px;border-radius:10px;border:1.5px solid #007aff;
+            background:#fff;color:#007aff;font-size:12px;font-weight:600;
+            cursor:pointer;transition:all .15s;font-family:inherit;}
+.topbar-btn:hover{background:#007aff;color:#fff;}
+
+/* ── BODY LAYOUT ── */
+.body{display:flex;flex:1;overflow:hidden;}
+
+/* ── WEEK FEED ── */
+.feed{flex:1;overflow-y:auto;padding:14px 14px 60px;
+      display:flex;flex-direction:column;gap:14px;background:#f2f2f7;}
+.feed::-webkit-scrollbar{width:6px;}
+.feed::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:3px;}
+
+/* ── WEEK CARD ── */
+.wk-card{background:#fff;border-radius:14px;overflow:hidden;
+         box-shadow:0 1px 4px rgba(0,0,0,.10),0 0 0 .5px rgba(0,0,0,.06);}
+.wk-card.is-current{box-shadow:0 0 0 2.5px #007aff,0 2px 12px rgba(0,122,255,.2);}
+
+/* Card header */
+.wk-hdr{display:flex;align-items:center;justify-content:space-between;
+        padding:8px 14px;border-bottom:.5px solid #e5e5ea;background:#fafafa;}
+.wk-title{font-size:13px;font-weight:700;color:#007aff;letter-spacing:-.1px;}
+.wk-range{font-size:11px;color:#8e8e93;}
+
+/* ── 8-COLUMN GRID ── */
+/* columns: 7 days + 1 summary */
+.wk-grid{display:grid;grid-template-columns:repeat(7,1fr) 110px;width:100%;}
+
+/* Column header row */
+.col-hdr{padding:5px 4px;text-align:center;font-size:9px;font-weight:600;
+         color:#8e8e93;letter-spacing:.5px;text-transform:uppercase;
+         border-bottom:.5px solid #e5e5ea;border-right:.5px solid #e5e5ea;
+         background:#fafafa;}
+.col-hdr:last-child{border-right:none;}
+.col-hdr.sum-hdr{color:#3a3a3c;}
+
+/* Day cells */
+.day-cell{border-right:.5px solid #e5e5ea;border-top:.5px solid #e5e5ea;
+          padding:8px 5px 10px;display:flex;flex-direction:column;
+          align-items:center;gap:5px;min-height:130px;min-width:0;}
+.day-cell:last-child{border-right:none;}
+.day-cell.is-today{background:rgba(0,122,255,.04);}
+
+/* Date number — iOS red circle for today */
+.date-num{width:28px;height:28px;border-radius:50%;display:flex;
+          align-items:center;justify-content:center;
+          font-size:15px;font-weight:500;color:#1c1c1e;flex-shrink:0;
+          transition:background .12s;}
+.day-cell.is-today .date-num{background:#ff3b30;color:#fff;font-weight:700;}
+
+/* Muscle dropdowns */
+.muscle-wrap{display:flex;flex-direction:column;gap:3px;width:100%;}
+.m-sel{width:100%;font-size:8.5px;padding:3px 2px;border-radius:7px;
+       border:.5px solid #c7c7cc;background:#f2f2f7;color:#1c1c1e;
+       font-family:inherit;cursor:pointer;outline:none;
+       appearance:none;-webkit-appearance:none;
+       text-align:center;transition:all .12s;}
+.m-sel.picked{background:rgba(0,122,255,.12);border-color:#007aff;
+              color:#007aff;font-weight:600;}
+.m-sel:focus{border-color:#007aff;}
+
+/* Wellness row */
+.well-wrap{display:flex;flex-direction:column;gap:3px;width:100%;margin-top:1px;}
+.well-item{display:flex;align-items:center;justify-content:space-between;gap:2px;}
+.well-lbl{font-size:7.5px;color:#8e8e93;flex:1;}
+.tick{width:16px;height:16px;border-radius:5px;border:1.5px solid #c7c7cc;
+      background:none;cursor:pointer;display:flex;align-items:center;
+      justify-content:center;font-size:10px;color:transparent;
+      transition:all .12s;flex-shrink:0;padding:0;font-family:inherit;}
+.tick:hover{border-color:#34c759;}
+.tick.on{background:#34c759;border-color:#34c759;color:#fff;font-weight:700;}
+
+/* ── SUMMARY CELL (8th column) ── */
+.sum-cell{border-top:.5px solid #e5e5ea;padding:8px 7px 10px;
+          display:flex;flex-direction:column;gap:3px;
+          min-height:130px;background:#f9f9fb;min-width:0;}
+.sum-ttl{font-size:8px;font-weight:700;color:#8e8e93;
+         text-transform:uppercase;letter-spacing:.5px;
+         text-align:center;margin-bottom:2px;}
+.sum-m{display:flex;align-items:center;justify-content:space-between;}
+.sum-mlbl{font-size:7.5px;color:#3a3a3c;}
+.sum-mval{font-size:8px;font-weight:700;}
+.sum-mval.hit{color:#007aff;}
+.sum-mval.miss{color:#c7c7cc;}
+.sum-div{border:none;border-top:.5px solid #d1d1d6;margin:3px 0;}
+.sum-w{display:flex;align-items:center;justify-content:space-between;}
+.sum-wlbl{font-size:7.5px;color:#3a3a3c;}
+.sum-wval{font-size:8px;font-weight:700;color:#34c759;}
+
+/* ── DASHBOARD SIDEBAR ── */
+.dash{width:200px;min-width:200px;border-left:.5px solid #d1d1d6;
+      background:#fff;display:flex;flex-direction:column;overflow:hidden;}
+.dash-scroll{flex:1;overflow-y:auto;padding:14px 12px 30px;
+             display:flex;flex-direction:column;gap:14px;}
+.dash-scroll::-webkit-scrollbar{width:4px;}
+.dash-scroll::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:3px;}
+.dash-sec{display:flex;flex-direction:column;gap:4px;}
+.dash-hd{font-size:9px;font-weight:700;color:#8e8e93;text-transform:uppercase;
+         letter-spacing:.7px;padding-bottom:5px;border-bottom:.5px solid #e5e5ea;
+         margin-bottom:2px;}
+.dash-row{display:flex;align-items:center;justify-content:space-between;margin-top:2px;}
+.dash-lbl{font-size:10px;color:#3a3a3c;}
+.dash-val{font-size:10px;font-weight:700;color:#007aff;}
+.dash-bar{height:3px;background:#e5e5ea;border-radius:2px;margin-top:2px;overflow:hidden;}
+.dash-fill{height:100%;border-radius:2px;transition:width .4s;}
+.dash-wval{font-size:10px;font-weight:700;color:#34c759;}
+.dash-note{font-size:8px;color:#8e8e93;margin-bottom:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>💪 Vanity — Fitness Tracker 2026</h1>
+  <button class="topbar-btn" onclick="goNow()">📍 Current Week</button>
+</div>
+
+<div class="body">
+  <div class="feed" id="feed"></div>
+  <div class="dash">
+    <div class="dash-scroll" id="dash"></div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+var VN_LS = 'ad_vanity';
+var VD = {};
+try { VD = JSON.parse(localStorage.getItem(VN_LS) || '{}'); } catch(e) {}
+function save() { try { localStorage.setItem(VN_LS, JSON.stringify(VD)); } catch(e) {} }
+
+var MUSCLES  = ['Back','Biceps','Triceps','Chest','Legs','Shoulders','Forearms'];
+var WELLNESS = ['Stretches','Core','Meditation'];
+var MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var DAY_HDRS = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+
+// ── DATE HELPERS ──
+function isoWK(dt) {
+  var d = new Date(dt); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+  var y = d.getFullYear();
+  var w = Math.ceil(((d - new Date(y,0,1)) / 86400000 + 1) / 7);
+  return y + '-W' + String(w).padStart(2,'0');
+}
+function wkMon(wk) {
+  var p = wk.split('-W'), y = parseInt(p[0]), w = parseInt(p[1]);
+  var jan4 = new Date(y,0,4), dow = jan4.getDay() || 7;
+  var mon = new Date(jan4); mon.setDate(jan4.getDate() - dow + 1 + (w-1)*7);
+  return mon;
+}
+function dkey(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fmtShort(d) { return d.getDate() + ' ' + MN[d.getMonth()]; }
+function weeksIn2026() {
+  var out = [], d = new Date(2026,0,1);
+  while (d.getFullYear() <= 2026) {
+    var wk = isoWK(d);
+    if (wk.startsWith('2026') && !out.includes(wk)) out.push(wk);
+    d.setDate(d.getDate() + 7);
+  }
+  return out;
+}
+function ensure(wk) { if (!VD[wk]) VD[wk] = { days:{}, well:{} }; }
+
+// ── BUILD ALL WEEKS ──
+function render() {
+  var feed = document.getElementById('feed');
+  if (!feed) { console.error('Vanity: #feed not found'); return; }
+
+  var allWks = weeksIn2026();
+  if (!allWks.length) { feed.innerHTML = '<p style="padding:20px;color:red">Error: no weeks generated</p>'; return; }
+
+  var curWk  = isoWK(new Date());
+  var total  = allWks.length;
+  var todayK = dkey(new Date());
+
+  feed.innerHTML = '';
+
+  allWks.forEach(function(wk) {
+    ensure(wk);
+    var wkN   = parseInt(wk.split('-W')[1]);
+    var isCur = (wk === curWk);
+    var mon   = wkMon(wk);
+    var sun   = new Date(mon); sun.setDate(mon.getDate() + 6);
+
+    // ── Card ──
+    var card = document.createElement('div');
+    card.className = 'wk-card' + (isCur ? ' is-current' : '');
+    card.id = 'wk-' + wk;
+
+    // ── Card header ──
+    var hdr = document.createElement('div');
+    hdr.className = 'wk-hdr';
+    hdr.innerHTML =
+      '<span class="wk-title">' + (isCur ? '★ ' : '') +
+      'Week ' + wkN + ' of ' + total + ' — 2026</span>' +
+      '<span class="wk-range">' + fmtShort(mon) + ' → ' + fmtShort(sun) + '</span>';
+    card.appendChild(hdr);
+
+    // ── Grid ──
+    var grid = document.createElement('div');
+    grid.className = 'wk-grid';
+
+    // Column header row (8 cells)
+    DAY_HDRS.forEach(function(h) {
+      var ch = document.createElement('div');
+      ch.className = 'col-hdr';
+      ch.textContent = h;
+      grid.appendChild(ch);
+    });
+    // Summary column header
+    var sumHdr = document.createElement('div');
+    sumHdr.className = 'col-hdr sum-hdr';
+    sumHdr.textContent = 'WEEK ✦';
+    grid.appendChild(sumHdr);
+
+    // ── 7 day cells ──
+    for (var di = 0; di < 7; di++) {
+      var dayDate = new Date(mon);
+      dayDate.setDate(mon.getDate() + di);
+      var dk2     = dkey(dayDate);
+      var isToday = (dk2 === todayK);
+      var dayData = VD[wk].days[dk2] || { m1:'', m2:'' };
+
+      var cell = document.createElement('div');
+      cell.className = 'day-cell' + (isToday ? ' is-today' : '');
+
+      // Date circle
+      var dn = document.createElement('div');
+      dn.className = 'date-num';
+      dn.textContent = dayDate.getDate();
+      cell.appendChild(dn);
+
+      // 2 muscle dropdowns
+      var mwrap = document.createElement('div');
+      mwrap.className = 'muscle-wrap';
+      [1,2].forEach(function(slot) {
+        var sel = document.createElement('select');
+        var cur = (slot === 1) ? dayData.m1 : dayData.m2;
+        sel.className = 'm-sel' + (cur ? ' picked' : '');
+        // Options: blank + muscles (abbreviated 3 chars)
+        var opts = [['', '—']].concat(MUSCLES.map(function(m){ return [m, m.slice(0,4)]; }));
+        opts.forEach(function(opt) {
+          var o = document.createElement('option');
+          o.value = opt[0]; o.textContent = opt[1];
+          if (cur === opt[0]) o.selected = true;
+          sel.appendChild(o);
+        });
+        (function(w2, dk3, s, el) {
+          el.onchange = function() {
+            ensure(w2);
+            if (!VD[w2].days[dk3]) VD[w2].days[dk3] = { m1:'', m2:'' };
+            VD[w2].days[dk3]['m' + s] = this.value;
+            el.className = 'm-sel' + (this.value ? ' picked' : '');
+            save(); refreshSum(w2); updateDash();
+          };
+        })(wk, dk2, slot, sel);
+        mwrap.appendChild(sel);
+      });
+      cell.appendChild(mwrap);
+
+      // Wellness ticks
+      var wellWrap = document.createElement('div');
+      wellWrap.className = 'well-wrap';
+      WELLNESS.forEach(function(well) {
+        var wKey = dk2 + ':' + well.toLowerCase();
+        var on   = VD[wk].well[wKey] || false;
+
+        var item = document.createElement('div');
+        item.className = 'well-item';
+
+        var lbl = document.createElement('span');
+        lbl.className = 'well-lbl';
+        lbl.textContent = well.slice(0,3);
+
+        var btn = document.createElement('button');
+        btn.className = 'tick' + (on ? ' on' : '');
+        btn.textContent = on ? '✓' : '';
+
+        (function(w2, wk2, b) {
+          b.onclick = function() {
+            ensure(w2);
+            VD[w2].well[wk2] = !VD[w2].well[wk2];
+            b.className = 'tick' + (VD[w2].well[wk2] ? ' on' : '');
+            b.textContent = VD[w2].well[wk2] ? '✓' : '';
+            save(); refreshSum(w2); updateDash();
+          };
+        })(wk, wKey, btn);
+
+        item.appendChild(lbl);
+        item.appendChild(btn);
+        wellWrap.appendChild(item);
+      });
+      cell.appendChild(wellWrap);
+      grid.appendChild(cell);
+    }
+
+    // ── 8th cell: Summary ──
+    var sumCell = document.createElement('div');
+    sumCell.className = 'sum-cell';
+    sumCell.id = 'sum-' + wk;
+    grid.appendChild(sumCell);
+
+    card.appendChild(grid);
+    feed.appendChild(card);
+    refreshSum(wk);
+  });
+
+  updateDash();
+
+  // Scroll to current week
+  setTimeout(function() {
+    var el = document.getElementById('wk-' + curWk);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 150);
+}
+
+// ── REFRESH SUMMARY CELL ──
+function refreshSum(wk) {
+  var cell = document.getElementById('sum-' + wk);
+  if (!cell) return;
+  ensure(wk);
+  var mon = wkMon(wk);
+  var mC = {}, wC = {};
+  MUSCLES.forEach(function(m)  { mC[m] = 0; });
+  WELLNESS.forEach(function(w) { wC[w] = 0; });
+
+  for (var di = 0; di < 7; di++) {
+    var d   = new Date(mon); d.setDate(mon.getDate() + di);
+    var dk2 = dkey(d);
+    var dd  = VD[wk].days[dk2] || {};
+    if (dd.m1 && mC[dd.m1] !== undefined) mC[dd.m1]++;
+    if (dd.m2 && mC[dd.m2] !== undefined) mC[dd.m2]++;
+    WELLNESS.forEach(function(w2) {
+      if (VD[wk].well[dk2 + ':' + w2.toLowerCase()]) wC[w2]++;
+    });
+  }
+
+  var html = '<div class="sum-ttl">Week Summary</div>';
+  MUSCLES.forEach(function(m) {
+    var c = mC[m];
+    html += '<div class="sum-m">' +
+            '<span class="sum-mlbl">' + m.slice(0,4) + '</span>' +
+            '<span class="sum-mval ' + (c > 0 ? 'hit' : 'miss') + '">' + c + '×</span>' +
+            '</div>';
+  });
+  html += '<hr class="sum-div"/>';
+  WELLNESS.forEach(function(w2) {
+    var c = wC[w2];
+    html += '<div class="sum-w">' +
+            '<span class="sum-wlbl">' + w2.slice(0,3) + '</span>' +
+            '<span class="sum-wval">' + c + '/7</span>' +
+            '</div>';
+  });
+  cell.innerHTML = html;
+}
+
+// ── DASHBOARD ──
+function updateDash() {
+  var dash = document.getElementById('dash');
+  if (!dash) return;
+  var today = new Date();
+  var mM = {}, mY = {};
+  MUSCLES.forEach(function(m)  { mM[m] = 0; mY[m] = 0; });
+  var wM = {}, wY = {};
+  WELLNESS.forEach(function(w) { wM[w] = 0; wY[w] = 0; });
+
+  Object.keys(VD).forEach(function(wk) {
+    if (!wk.startsWith('2026')) return;
+    var mon = wkMon(wk);
+    for (var di = 0; di < 7; di++) {
+      var d   = new Date(mon); d.setDate(mon.getDate() + di);
+      if (d.getFullYear() !== 2026) continue;
+      var dk2   = dkey(d);
+      var isM   = (d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear());
+      var dd    = VD[wk].days[dk2] || {};
+      [dd.m1, dd.m2].forEach(function(m) {
+        if (m && mY[m] !== undefined) { mY[m]++; if (isM) mM[m]++; }
+      });
+      WELLNESS.forEach(function(w2) {
+        if (VD[wk].well[dk2 + ':' + w2.toLowerCase()]) { wY[w2]++; if (isM) wM[w2]++; }
+      });
+    }
+  });
+
+  var maxMm = Math.max(1, Math.max.apply(null, MUSCLES.map(function(m){ return mM[m]; })));
+  var maxMy = Math.max(1, Math.max.apply(null, MUSCLES.map(function(m){ return mY[m]; })));
+
+  dash.innerHTML =
+    '<div class="dash-sec">' +
+    '<div class="dash-hd" style="color:#007aff">📅 This Month</div>' +
+    MUSCLES.map(function(m) {
+      var c = mM[m], pct = Math.round(c / maxMm * 100);
+      return '<div><div class="dash-row">' +
+             '<span class="dash-lbl">' + m + '</span>' +
+             '<span class="dash-val">' + c + '</span></div>' +
+             '<div class="dash-bar"><div class="dash-fill" style="width:' + pct + '%;background:#007aff"></div></div></div>';
+    }).join('') +
+    '</div>' +
+    '<div class="dash-sec">' +
+    '<div class="dash-hd" style="color:#5856d6">🗓 All Year</div>' +
+    MUSCLES.map(function(m) {
+      var c = mY[m], pct = Math.round(c / maxMy * 100);
+      return '<div><div class="dash-row">' +
+             '<span class="dash-lbl">' + m + '</span>' +
+             '<span class="dash-val" style="color:#5856d6">' + c + '</span></div>' +
+             '<div class="dash-bar"><div class="dash-fill" style="width:' + pct + '%;background:#5856d6"></div></div></div>';
+    }).join('') +
+    '</div>' +
+    '<div class="dash-sec">' +
+    '<div class="dash-hd" style="color:#34c759">🟢 Wellness</div>' +
+    '<div class="dash-note">month / year</div>' +
+    WELLNESS.map(function(w2) {
+      return '<div class="dash-row">' +
+             '<span class="dash-lbl">' + w2 + '</span>' +
+             '<span class="dash-wval">' + wM[w2] + ' / ' + wY[w2] + '</span></div>';
+    }).join('') +
+    '</div>';
+}
+
+function goNow() {
+  var el = document.getElementById('wk-' + isoWK(new Date()));
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', function() {
+  render();
+});
+</script>
+</body>
+</html>
