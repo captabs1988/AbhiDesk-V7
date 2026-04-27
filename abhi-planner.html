@@ -78,22 +78,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .sb-tm{flex-shrink:0;font-size:8px;opacity:.8;}
 .sb-x{flex-shrink:0;font-size:9px;opacity:0;cursor:pointer;background:none;border:none;color:inherit;padding:0 1px;}
 .sb:hover .sb-x{opacity:.8;}
-/* done / completed state — motivating, not grey! */
+/* done / completed state */
 .sb.done{
   cursor:default!important;
+  opacity:.72;
   border-style:solid!important;
-  border-color:rgba(52,211,153,.6)!important;
-  background:linear-gradient(135deg,rgba(52,211,153,.18),rgba(52,211,153,.08))!important;
-  box-shadow:0 0 0 1px rgba(52,211,153,.2);
+  border-color:rgba(52,211,153,.5)!important;
 }
-.sb.done .sb-t{
-  font-weight:800;
-  font-style:italic;
-  color:#34d399!important;
-  letter-spacing:.3px;
-  opacity:1;
-}
-.sb.done .sb-tm{opacity:.8;color:#34d399!important;}
+.sb.done .sb-t{text-decoration:line-through;opacity:.7;}
+.sb.done .sb-tm{opacity:.55;}
 .sb-tick{
   flex-shrink:0;font-size:10px;cursor:pointer;background:none;border:none;
   color:inherit;padding:0 1px;opacity:.45;line-height:1;transition:opacity .12s,color .12s;
@@ -144,13 +137,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 #cp-viewport{position:absolute;top:22px;left:22px;right:14px;bottom:14px;overflow:hidden;z-index:2;}
 #cw{position:absolute;top:0;left:0;transform-origin:0 0;width:6000px;height:6000px;}
 #dr-rect{position:absolute;border:1.5px dashed var(--ac);background:rgba(108,138,255,.07);border-radius:3px;pointer-events:none;z-index:100;display:none;}
-
-/* ALIGNMENT GUIDES */
-.align-guide{position:absolute;pointer-events:none;z-index:200;opacity:0;transition:opacity .08s;}
-.align-guide.show{opacity:1;}
-.align-guide.v{width:1px;background:#ff79c6;top:0;bottom:0;}
-.align-guide.h{height:1px;background:#ff79c6;left:0;right:0;}
-.align-guide-label{position:absolute;font-size:8px;font-family:monospace;background:#ff79c6;color:#1a1a1a;padding:1px 4px;border-radius:2px;white-space:nowrap;z-index:201;pointer-events:none;}
 
 /* MULTI-SELECT LASSO */
 #sel-rect{position:absolute;border:1.5px dashed #f59e0b;background:rgba(245,158,11,.06);border-radius:3px;pointer-events:none;z-index:101;display:none;}
@@ -216,18 +202,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .cdots{display:flex;gap:3px;flex-shrink:0;align-items:center;}
 .cdot{width:10px;height:10px;border-radius:50%;cursor:pointer;border:1px solid rgba(255,255,255,.25);flex-shrink:0;transition:transform .1s;}
 .cdot:hover{transform:scale(1.4);}
-
-/* REPEAT BADGE */
-.repeat-badge{font-size:7px;font-family:monospace;background:rgba(245,158,11,.18);color:var(--gd);border:1px solid rgba(245,158,11,.4);border-radius:2px;padding:0 3px;margin-left:2px;white-space:nowrap;}
-/* TEXT BOX TITLE */
-.cntx-title-bar{padding:3px 8px 0;display:flex;align-items:center;gap:4px;border-bottom:1px solid rgba(255,255,255,.07);}
-.cntx-title-inp{flex:1;background:transparent;border:none;outline:none;font-size:11px;font-weight:700;color:var(--tx);font-family:monospace;padding:2px 0;}
-.cntx-title-inp::placeholder{color:var(--mu);font-weight:400;}
-/* COPY BUTTON on hover */
-.cn-copy{position:absolute;top:-7px;left:-7px;width:15px;height:15px;border-radius:50%;background:var(--ac2);border:1.5px solid var(--bg);color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .12s;z-index:20;}
-.cns:hover>.cn-copy,.cnp:hover>.cn-copy,.cnb:hover>.cn-copy,.cntx:hover>.cn-copy{opacity:1;}
-/* section text boxes */
-.sec-txt-zone{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;gap:2px;padding:2px 4px;}
 
 /* stage row selected highlight */
 .stage-row.sel-stage{background:rgba(108,138,255,.18)!important;outline:1px solid var(--ac);}
@@ -605,17 +579,10 @@ body[data-editmode="drag"] #cp.panning,body[data-editmode="drag"] #cp-viewport.p
     <div id="cp-viewport">
       <div id="dr-rect"></div>
       <div id="sel-rect"></div>
-      <!-- Alignment guides -->
-      <div id="ag-vl" class="align-guide v" style="display:none"></div>
-      <div id="ag-vr" class="align-guide v" style="display:none"></div>
-      <div id="ag-vc" class="align-guide v" style="display:none"></div>
-      <div id="ag-ht" class="align-guide h" style="display:none"></div>
-      <div id="ag-hb" class="align-guide h" style="display:none"></div>
-      <div id="ag-hc" class="align-guide h" style="display:none"></div>
       <div id="cw"></div>
       <div id="th">✏ drag canvas to draw box · right-click for options</div>
-  <div id="shortcuts-hint" style="position:absolute;bottom:36px;left:8px;font-size:8px;font-family:monospace;color:var(--mu);background:var(--sf);border:1px solid var(--bd);padding:3px 8px;border-radius:4px;pointer-events:none;z-index:20;opacity:.7;line-height:1.7;">
-        Ctrl+scroll = zoom · Scroll = pan · M = Move/Edit · Ctrl+D = duplicate · Space+drag = pan · Ctrl+0 = reset · Right-click = options
+      <div id="shortcuts-hint" style="position:absolute;bottom:36px;left:8px;font-size:8px;font-family:monospace;color:var(--mu);background:var(--sf);border:1px solid var(--bd);padding:3px 8px;border-radius:4px;pointer-events:none;z-index:20;opacity:.7;line-height:1.7;">
+        Ctrl+scroll = zoom at cursor · Scroll = pan · M = toggle Move/Edit · Space+drag = pan · Ctrl+0 = reset
       </div>
       <div id="sel-badge">0 selected</div>
       <div id="cnav">
@@ -635,10 +602,7 @@ body[data-editmode="drag"] #cp.panning,body[data-editmode="drag"] #cp-viewport.p
   <div class="ci" id="ctx-pro" onclick="ctxAct('pro')">◆ Create Project</div>
   <div class="ci" id="ctx-blk" onclick="ctxAct('blk')">▬ Create Block</div>
   <div class="ci" id="ctx-txt" onclick="ctxAct('txt')">📝 Text / Notes Box</div>
-  <div class="ci" id="ctx-sec-txt" onclick="ctxAct('sec-txt')" style="display:none">📝 Add Text Box to Section</div>
   <div class="csep" id="ctx-sp"></div>
-  <div class="ci" id="ctx-dup" onclick="ctxAct('dup')" style="display:none">⎘ Duplicate</div>
-  <div class="ci" id="ctx-rep" onclick="ctxAct('rep')" style="display:none">🔁 Make Repeatable</div>
   <div class="ci d" id="ctx-del" onclick="ctxAct('del')">✕ Delete</div>
 </div>
 
@@ -969,10 +933,9 @@ function restorePlannerAutosave(){
 var uStack=[];
 function safeCloneNodes(arr){
   return arr.map(function(n){
-    var c={id:n.id,type:n.type,x:n.x,y:n.y,w:n.w,h:n.h,title:n.title,color:n.color,bg:n.bg,wrap:n.wrap,hours:n.hours,minutes:n.minutes,text:n.text,repeatable:n.repeatable};
+    var c={id:n.id,type:n.type,x:n.x,y:n.y,w:n.w,h:n.h,title:n.title,color:n.color,bg:n.bg,wrap:n.wrap,hours:n.hours,minutes:n.minutes,text:n.text};
     if(n.stages)c.stages=n.stages.map(function(s){return{id:s.id,title:s.title,hours:s.hours,minutes:s.minutes};});
     if(n.subtasks)c.subtasks=n.subtasks.map(function(s){return{id:s.id,title:s.title,hours:s.hours,minutes:s.minutes};});
-    if(n.textBoxes)c.textBoxes=JSON.parse(JSON.stringify(n.textBoxes));
     return c;
   });
 }
@@ -993,24 +956,6 @@ function undo(){
 document.addEventListener('keydown',function(e){
   if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo();}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();exportD();}
-  // Ctrl+D = duplicate selected
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'){
-    e.preventDefault();
-    if(selectedNodes.size>0){
-      pushU();
-      var toClone=Array.from(selectedNodes);
-      toClone.forEach(function(id){
-        var orig=nodes.find(function(n){return n.id===id;});
-        if(!orig)return;
-        var clone=JSON.parse(JSON.stringify(orig));
-        clone.id=uid();clone.x=(clone.x||0)+30;clone.y=(clone.y||0)+30;
-        if(orig.type==='pro'){clone.stages=(clone.stages||[]).map(function(s){return Object.assign({},s,{id:uid()});});}
-        nodes.push(clone);
-      });
-      renderCanvas();
-    }
-    return;
-  }
   if(e.key==='Escape'){selectedNodes.clear();selectedStages=[];updateSelBadge();renderCanvas();closeAllCtx();}
   if(!e.target.isContentEditable&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)){
     // Zoom shortcuts
@@ -1287,9 +1232,8 @@ function mkSB(b,iso){
   // ── tick button ──
   var tick=document.createElement('button');
   tick.className='sb-tick';
-  tick.title=isDone?'Mark as not done':'Mark as done!';
+  tick.title=isDone?'Mark as not done':'Mark as done — freezes this block';
   tick.textContent=isDone?'✓':'○';
-  tick.style.cssText=isDone?'color:#34d399;font-size:12px;font-weight:800;opacity:1;':'';
   tick.addEventListener('click',function(e){
     e.stopPropagation();
     pushU();
@@ -1303,8 +1247,7 @@ function mkSB(b,iso){
 
   // done badge showing the locked date
   if(isDone){
-    var badge=E('span','sb-done-badge');badge.textContent='✅ DONE';badge.title='Completed — frozen to '+fmtD(iso);
-    badge.style.cssText='flex-shrink:0;font-size:7px;font-family:monospace;font-weight:800;background:rgba(52,211,153,.22);color:#34d399;border:1px solid rgba(52,211,153,.5);border-radius:3px;padding:0 4px;letter-spacing:.5px;white-space:nowrap;font-style:normal;';
+    var badge=E('span','sb-done-badge');badge.textContent='DONE';badge.title='Completed — frozen to '+fmtD(iso);
     d.appendChild(tick);d.appendChild(t);d.appendChild(tm);d.appendChild(badge);
   } else {
     var x=document.createElement('button');x.className='sb-x';x.textContent='×';
@@ -1965,44 +1908,6 @@ function applyT(skipScroll){
   drawRulers();
   queuePlannerSave();
 }
-
-// ── ALIGNMENT GUIDES ──
-var AG_THRESH=6; // snap distance in world px
-var agGuides=['ag-vl','ag-vr','ag-vc','ag-ht','ag-hb','ag-hc'];
-function hideGuides(){agGuides.forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});}
-function showGuide(id,axis,worldPos){
-  var el=document.getElementById(id);if(!el)return;
-  el.style.display='block';
-  if(axis==='v'){
-    var sx=worldPos*cScale+cOffX;
-    el.style.left=sx+'px';el.style.top='0';el.style.width='1px';el.style.height='100%';
-  } else {
-    var sy=worldPos*cScale+cOffY;
-    el.style.top=sy+'px';el.style.left='0';el.style.height='1px';el.style.width='100%';
-  }
-}
-function checkAlignGuides(dragNode){
-  hideGuides();
-  var n=dragNode.node;
-  var nW=n.w||180, nH=n.h||40;
-  var nL=n.x, nR=n.x+nW, nCX=n.x+nW/2;
-  var nT=n.y, nB=n.y+nH, nCY=n.y+nH/2;
-  var guidesFired={vl:false,vr:false,vc:false,ht:false,hb:false,hc:false};
-  nodes.forEach(function(o){
-    if(o.id===n.id)return;
-    var oW=o.w||180, oH=o.h||40;
-    var oL=o.x, oR=o.x+oW, oCX=o.x+oW/2;
-    var oT=o.y, oB=o.y+oH, oCY=o.y+oH/2;
-    // Vertical (left edges, right edges, centres)
-    if(!guidesFired.vl&&Math.abs(nL-oL)<AG_THRESH/cScale){showGuide('ag-vl','v',oL);guidesFired.vl=true;n.x=oL;}
-    if(!guidesFired.vr&&Math.abs(nR-oR)<AG_THRESH/cScale){showGuide('ag-vr','v',oR);guidesFired.vr=true;n.x=oR-nW;}
-    if(!guidesFired.vc&&Math.abs(nCX-oCX)<AG_THRESH/cScale){showGuide('ag-vc','v',oCX);guidesFired.vc=true;n.x=oCX-nW/2;}
-    // Horizontal
-    if(!guidesFired.ht&&Math.abs(nT-oT)<AG_THRESH/cScale){showGuide('ag-ht','h',oT);guidesFired.ht=true;n.y=oT;}
-    if(!guidesFired.hb&&Math.abs(nB-oB)<AG_THRESH/cScale){showGuide('ag-hb','h',oB);guidesFired.hb=true;n.y=oB-nH;}
-    if(!guidesFired.hc&&Math.abs(nCY-oCY)<AG_THRESH/cScale){showGuide('ag-hc','h',oCY);guidesFired.hc=true;n.y=oCY-nH/2;}
-  });
-}
 applyT();
 function zoomAt(mx,my,ns){
   ns=Math.min(5,Math.max(0.05,ns));
@@ -2135,9 +2040,6 @@ document.addEventListener('mousemove',function(e){
     var nx=Math.round((e.clientX-vr.left-cOffX)/cScale-nDragOff.x);
     var ny=Math.round((e.clientY-vr.top-cOffY)/cScale-nDragOff.y);
     nDrag.node.x=nx;nDrag.node.y=ny;
-    // Check alignment guides
-    checkAlignGuides(nDrag);
-    nx=nDrag.node.x;ny=nDrag.node.y;
     var el2=document.getElementById(nDrag.node.id);
     if(el2){el2.style.left=nx+'px';el2.style.top=ny+'px';}
     // Move children (if dragging a section)
@@ -2186,7 +2088,6 @@ document.addEventListener('mouseup',function(e){
   if(lasso){lasso=false;selRect.style.display='none';updateSelBadge();renderCanvas();}
   if(nDrag){
     pushU();
-    hideGuides();
     document.querySelectorAll('.dragging').forEach(function(el){el.classList.remove('dragging');});
     nDrag=null;
     queuePlannerSave();
@@ -2212,18 +2113,11 @@ function openCtx(px,py,nodeId){
   var isNode=!!nodeId;
   var node=isNode?nodes.find(function(n){return n.id===nodeId;}):null;
   var inSection=isNode&&node&&node.type==='sec';
-  var onSec=isNode&&node&&node.type==='sec';
-  var onBlk=isNode&&node&&node.type==='blk';
   document.getElementById('ctx-sec').style.display=(!isNode)?'flex':'none';
   document.getElementById('ctx-pro').style.display=(!isNode||inSection)?'flex':'none';
   document.getElementById('ctx-blk').style.display=(!isNode||inSection)?'flex':'none';
   document.getElementById('ctx-txt').style.display=(!isNode)?'flex':'none';
-  document.getElementById('ctx-sec-txt').style.display=onSec?'flex':'none';
   document.getElementById('ctx-sp').style.display=isNode?'block':'none';
-  document.getElementById('ctx-dup').style.display=isNode?'flex':'none';
-  document.getElementById('ctx-rep').style.display=(onBlk)?'flex':'none';
-  if(onBlk&&node.repeatable){document.getElementById('ctx-rep').textContent='🔁 Remove Repeatable';}
-  else{document.getElementById('ctx-rep').textContent='🔁 Make Repeatable';}
   document.getElementById('ctx-del').style.display=isNode?'flex':'none';
   var m=document.getElementById('ctx');
   m.style.left=px+'px';m.style.top=py+'px';
@@ -2234,52 +2128,10 @@ function ctxAct(type){
   closeAllCtx();
   var pos=ctxWP||{x:200,y:200,w:220,h:120};
   if(type==='del'&&ctxTgt){pushU();nodes=nodes.filter(function(n){return n.id!==ctxTgt;});renderCanvas();return;}
-  if(type==='dup'&&ctxTgt){
-    pushU();
-    var orig=nodes.find(function(n){return n.id===ctxTgt;});
-    if(orig){
-      var clone=JSON.parse(JSON.stringify(orig));
-      clone.id=uid();clone.x=(clone.x||0)+30;clone.y=(clone.y||0)+30;
-      // If it's a section, also duplicate contained nodes
-      if(orig.type==='sec'){
-        var contained=getNodesInsideSection(orig);
-        var idMap={};
-        contained.forEach(function(cn){
-          var cc=JSON.parse(JSON.stringify(cn));
-          idMap[cn.id]=uid();
-          cc.id=idMap[cn.id];cc.x=(cc.x||0)+30;cc.y=(cc.y||0)+30;
-          nodes.push(cc);
-        });
-      } else if(orig.type==='pro'){
-        // Regen stage ids
-        clone.stages=(clone.stages||[]).map(function(s){return Object.assign({},s,{id:uid()});});
-      }
-      // Regen txt child ids
-      if(clone.textBoxes){clone.textBoxes=(clone.textBoxes||[]).map(function(t){return Object.assign({},t,{id:uid()});});}
-      nodes.push(clone);renderCanvas();
-    }
-    return;
-  }
-  if(type==='rep'&&ctxTgt){
-    pushU();
-    var nd=nodes.find(function(n){return n.id===ctxTgt;});
-    if(nd){nd.repeatable=!nd.repeatable;renderCanvas();}
-    return;
-  }
-  if(type==='sec-txt'&&ctxTgt){
-    pushU();
-    var secNd=nodes.find(function(n){return n.id===ctxTgt;});
-    if(secNd){
-      if(!secNd.textBoxes)secNd.textBoxes=[];
-      secNd.textBoxes.push({id:uid(),title:'Note',text:'',x:secNd.x+10,y:secNd.y+secNd.h-60,w:(secNd.w||220)-20,h:50});
-      renderCanvas();
-    }
-    return;
-  }
   if(type==='sec'){pushU();nodes.push({id:uid(),type:'sec',x:pos.x,y:pos.y,w:Math.max(220,pos.w),h:Math.max(140,pos.h),title:'New Section',color:'#a78bfa',bg:'rgba(167,139,250,0.08)'});renderCanvas();}
   else if(type==='pro'){openPW(pos);}
   else if(type==='blk'){pBlk={x:pos.x,y:pos.y,w:Math.max(200,pos.w),mode:'create'};openBM({title:'',hours:1,minutes:0,color:'#6c8aff',wrap:'wrap'});}
-  else if(type==='txt'){pushU();nodes.push({id:uid(),type:'txt',x:pos.x,y:pos.y,w:Math.max(200,pos.w),h:Math.max(100,pos.h),text:'',title:'',color:'#64748b'});renderCanvas();}
+  else if(type==='txt'){pushU();nodes.push({id:uid(),type:'txt',x:pos.x,y:pos.y,w:Math.max(200,pos.w),h:Math.max(100,pos.h),text:'',color:'#64748b'});renderCanvas();}
 }
 
 // ════════════════════════════════════════════════
@@ -2302,15 +2154,6 @@ function mkNode(n){
 function mkTextBox(n){
   var div=E('div','cntx');div.id=n.id;
   div.style.cssText='left:'+n.x+'px;top:'+n.y+'px;width:'+(n.w||260)+'px;min-height:'+(n.h||110)+'px;border-color:'+(n.color||'rgba(255,255,255,.15)')+';background:'+(n.noteBg||'linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02))')+';';
-  // ── TITLE BAR ──
-  var titleBar=E('div','cntx-title-bar');
-  var titleInp=document.createElement('input');
-  titleInp.type='text';titleInp.className='cntx-title-inp';
-  titleInp.value=n.title||'';titleInp.placeholder='Title (optional)…';
-  titleInp.addEventListener('input',function(){n.title=titleInp.value;});
-  titleInp.addEventListener('mousedown',function(e){e.stopPropagation();});
-  titleBar.appendChild(titleInp);
-  div.appendChild(titleBar);
   var bar=E('div','cntx-bar');
   var lbl=E('span','cntx-label');lbl.textContent='📝 notes';
   // Font selector
@@ -2357,10 +2200,6 @@ function mkTextBox(n){
   var delBtn2=E('div','cn-del cntx-del');delBtn2.textContent='×';delBtn2.title='Delete this note';
   delBtn2.addEventListener('click',function(e){e.stopPropagation();pushU();nodes=nodes.filter(function(x){return x.id!==n.id;});renderCanvas();});
   div.appendChild(delBtn2);
-  // copy button
-  var copyBtn=E('div','cn-copy');copyBtn.title='Duplicate text box';copyBtn.textContent='⎘';
-  copyBtn.addEventListener('click',function(e){e.stopPropagation();ctxTgt=n.id;ctxAct('dup');});
-  div.appendChild(copyBtn);
   setupDrag(div,n);
   return div;
 }
@@ -2421,8 +2260,7 @@ function mkDotGrip(variant, getDragBlock, title){
     e.stopPropagation();
     var payload=getDragBlock();
     var srcNode=(payload&&payload.id)?nodes.find(function(n){return n.id===payload.id;}):null;
-    // Skip stacked warning for repeatable blocks
-    if(srcNode&&srcNode.stackedCount>0&&!srcNode.repeatable){
+    if(srcNode&&srcNode.stackedCount>0){
       var ok=window.confirm('This item is already stacked in the calendar. Are you sure you want to stack this again?');
       if(!ok){e.preventDefault();DragPay=null;return;}
     }
@@ -2499,67 +2337,8 @@ function mkSection(n){
   bar.appendChild(mkCDots(n,function(c){n.color=c;n.bg='rgba('+hexToRgb(c)+',0.08)';}));
   div.appendChild(bar);
   var body=E('div','cns-body');div.appendChild(body);
-  // ── Embedded text boxes (sticky to section) ──
-  if(n.textBoxes&&n.textBoxes.length){
-    n.textBoxes.forEach(function(tb){
-      div.appendChild(mkSectionTB(n,tb));
-    });
-  }
   div.appendChild(mkResizeHandle(n));div.appendChild(mkDelBtn(n));
-  // copy button
-  var copyBtn=E('div','cn-copy');copyBtn.title='Duplicate section';copyBtn.textContent='⎘';
-  copyBtn.addEventListener('click',function(e){
-    e.stopPropagation();ctxTgt=n.id;ctxAct('dup');
-  });
-  div.appendChild(copyBtn);
   setupDrag(div,n);
-  return div;
-}
-
-// ── SECTION TEXT BOX ──
-function mkSectionTB(sec,tb){
-  var div=E('div','');
-  // Position relative to section
-  var relX=(tb.relX!==undefined)?tb.relX:8;
-  var relY=(tb.relY!==undefined)?tb.relY:(sec.h-80);
-  tb.relX=relX;tb.relY=relY;
-  div.style.cssText='position:absolute;left:'+relX+'px;top:'+relY+'px;width:'+(tb.w||200)+'px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);border-radius:5px;z-index:3;min-height:50px;';
-  // Title bar
-  var tbar=E('div','');
-  tbar.style.cssText='display:flex;align-items:center;gap:4px;padding:2px 6px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18);border-radius:4px 4px 0 0;cursor:grab;';
-  var titleInp=document.createElement('input');
-  titleInp.type='text';titleInp.value=tb.title||'';titleInp.placeholder='Title…';
-  titleInp.style.cssText='flex:1;background:transparent;border:none;outline:none;font-size:9px;font-weight:700;color:var(--tx);font-family:monospace;padding:0;';
-  titleInp.addEventListener('input',function(){tb.title=titleInp.value;});
-  titleInp.addEventListener('mousedown',function(e){e.stopPropagation();});
-  // Delete
-  var delX=E('span','');delX.textContent='×';
-  delX.style.cssText='font-size:10px;cursor:pointer;color:var(--rd);opacity:.7;padding:0 2px;';
-  delX.addEventListener('click',function(e){e.stopPropagation();pushU();sec.textBoxes=sec.textBoxes.filter(function(x){return x.id!==tb.id;});renderCanvas();});
-  tbar.appendChild(titleInp);tbar.appendChild(delX);
-  div.appendChild(tbar);
-  // Text area
-  var ta=document.createElement('textarea');
-  ta.value=tb.text||'';ta.placeholder='Notes…';
-  ta.style.cssText='width:100%;min-height:40px;background:transparent;border:none;outline:none;color:var(--tx);font-size:11px;font-family:inherit;line-height:1.6;resize:none;padding:4px 6px;display:block;';
-  ta.addEventListener('input',function(){tb.text=ta.value;ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
-  ta.addEventListener('mousedown',function(e){e.stopPropagation();});
-  setTimeout(function(){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';},0);
-  div.appendChild(ta);
-  // Drag inside section
-  var secDragOff={};
-  tbar.addEventListener('mousedown',function(e){
-    if(e.button!==0)return;
-    e.stopPropagation();
-    var startX=e.clientX,startY=e.clientY,origX=tb.relX,origY=tb.relY;
-    function onMove(em){
-      tb.relX=origX+(em.clientX-startX)/cScale;
-      tb.relY=origY+(em.clientY-startY)/cScale;
-      div.style.left=tb.relX+'px';div.style.top=tb.relY+'px';
-    }
-    function onUp(){document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);pushU();}
-    document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
-  });
   return div;
 }
 
@@ -2661,10 +2440,6 @@ function mkProject(n){
   renderStages();
   div.appendChild(body);
   div.appendChild(mkDelBtn(n));
-  // copy button
-  var projCopy=E('div','cn-copy');projCopy.title='Duplicate project';projCopy.textContent='⎘';
-  projCopy.addEventListener('click',function(e){e.stopPropagation();ctxTgt=n.id;ctxAct('dup');});
-  div.appendChild(projCopy);
   setupDrag(div,n);
   return div;
 }
@@ -2754,12 +2529,6 @@ function mkBlock(n){
   div.appendChild(modeBtn);
   div.appendChild(mkDelBtn(n));
   div.appendChild(mkResizeHandle(n));
-  // copy button
-  var copyBtn=E('div','cn-copy');copyBtn.title='Duplicate block';copyBtn.textContent='⎘';
-  copyBtn.addEventListener('click',function(e){e.stopPropagation();ctxTgt=n.id;ctxAct('dup');});
-  div.appendChild(copyBtn);
-  // repeat badge
-  if(n.repeatable){var repBadge=E('span','repeat-badge');repBadge.textContent='🔁';repBadge.title='Repeatable — no stacked warning';mainRow.appendChild(repBadge);}
 
   // Always drag from whole block — setupDrag handles mode internally
   setupDrag(div,n);
