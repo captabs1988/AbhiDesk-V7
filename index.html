@@ -7,6 +7,7 @@
 <title>AbhiDesk</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230f1117'/><text x='50%25' y='54%25' font-size='18' text-anchor='middle' dominant-baseline='middle' fill='%236c8aff'>A</text></svg>"/>
 <style>
 :root{--bg:#0f1117;--surface:#171b24;--border:#252b38;--accent:#6c8aff;--accent2:#a78bfa;--gold:#f59e0b;--green:#34d399;--text:#e2e8f0;--muted:#64748b;}
 [data-theme="light"]{--bg:#f0f2f8;--surface:#ffffff;--border:#d1d8e8;--accent:#3a5fd9;--accent2:#7c3aed;--gold:#d97706;--green:#059669;--text:#1a2040;--muted:#6b7494;}
@@ -968,7 +969,7 @@ var pmShape='rect',pmBgColor='#1e2a4a',pmTxtColor='#e2e8f0';
 var pledgeScale=1,pledgeOffX=0,pledgeOffY=0;
 var pledgePanning=false,pledgePanStart={x:0,y:0,ox:0,oy:0};
 var pledgeDragging=null,pledgeDragOff={x:0,y:0};
-try{pledgeCards=JSON.parse(localStorage.getItem(PLEDGE_LS)||'[]');}catch(e){}
+try{var _pc=JSON.parse(localStorage.getItem(PLEDGE_LS)||'[]');pledgeCards=Array.isArray(_pc)?_pc:[];}catch(e){pledgeCards=[];}
 function savePledge(){try{localStorage.setItem(PLEDGE_LS,JSON.stringify(pledgeCards));}catch(e){} const _rows=pledgeCards.map(c=>({id:c.id||'',quote:c.quote||'',shape:c.shape||'',bgColor:c.bgColor||'',txtColor:c.txtColor||'',font:c.font||'',fontSize:c.fontSize||16,x:c.x||0,y:c.y||0,w:c.w||0,h:c.h||0}));postToSheet('pledge',_rows);}
 
 function openPledgeModal(){document.getElementById('pmQuote').value='';document.getElementById('pledgeModalBack').classList.add('open');setTimeout(function(){document.getElementById('pmQuote').focus();},100);}
@@ -1019,6 +1020,7 @@ function renderPledge(){
   var canvas=document.getElementById('pledgeCanvas');if(!canvas)return;
   canvas.innerHTML='';
   canvas.style.transform='translate('+pledgeOffX+'px,'+pledgeOffY+'px) scale('+pledgeScale+')';
+  if(!Array.isArray(pledgeCards))pledgeCards=[];
   pledgeCards.forEach(function(card){
     var el=document.createElement('div');
     el.className='pledge-card';el.id=card.id;
